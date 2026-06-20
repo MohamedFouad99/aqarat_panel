@@ -1,0 +1,17 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "aqarat-mark-2026",
+          "configurations": {
+            "web": "1:764080413498:web:dd9c7803b9cb54b9044e03"
+          }
+        }
+      }
+    }
+  }
+}
