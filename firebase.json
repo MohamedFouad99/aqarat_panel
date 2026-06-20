@@ -1,17 +1,1 @@
-{
-  "firestore": {
-    "rules": "firestore.rules"
-  },
-  "flutter": {
-    "platforms": {
-      "dart": {
-        "lib/firebase_options.dart": {
-          "projectId": "aqarat-mark-2026",
-          "configurations": {
-            "web": "1:764080413498:web:dd9c7803b9cb54b9044e03"
-          }
-        }
-      }
-    }
-  }
-}
+{"firestore":{"rules":"firestore.rules"},"flutter":{"platforms":{"dart":{"lib/firebase_options.dart":{"projectId":"appointment-booking-be1cd","configurations":{"web":"1:598236303109:web:1dfc89eb80eb4aad1db16c"}}}}}}

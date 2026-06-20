@@ -53,11 +53,12 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDjC6dJA6qMeaNZXkpDKd5_hZbU_bs-Fgw',
-    appId: '1:764080413498:web:dd9c7803b9cb54b9044e03',
-    messagingSenderId: '764080413498',
-    projectId: 'aqarat-mark-2026',
-    authDomain: 'aqarat-mark-2026.firebaseapp.com',
-    storageBucket: 'aqarat-mark-2026.firebasestorage.app',
+    apiKey: 'AIzaSyB7bslxsAG-DPkiNztnBdZXozor83k7y0A',
+    appId: '1:598236303109:web:1dfc89eb80eb4aad1db16c',
+    messagingSenderId: '598236303109',
+    projectId: 'appointment-booking-be1cd',
+    authDomain: 'appointment-booking-be1cd.firebaseapp.com',
+    storageBucket: 'appointment-booking-be1cd.firebasestorage.app',
+    measurementId: 'G-V9RWEYZ75S',
   );
 }
