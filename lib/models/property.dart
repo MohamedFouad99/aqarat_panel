@@ -90,6 +90,13 @@ class Property {
   final List<String> images;
   final PropertyStatus status;
   final bool featured;
+  // وسائط إضافية (اختيارية)
+  final String? videoUrl; // رابط فيديو (YouTube مثلاً)
+  final double? latitude;
+  final double? longitude;
+  // بيانات المعلن
+  final String? advertiserName;
+  final String? advertiserPhone;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -108,6 +115,11 @@ class Property {
     required this.images,
     required this.status,
     this.featured = false,
+    this.videoUrl,
+    this.latitude,
+    this.longitude,
+    this.advertiserName,
+    this.advertiserPhone,
     this.createdAt,
     this.updatedAt,
   });
@@ -129,6 +141,11 @@ class Property {
       images: (map['images'] as List<dynamic>?)?.cast<String>() ?? const [],
       status: PropertyStatus.fromString(map['status'] as String?),
       featured: map['featured'] as bool? ?? false,
+      videoUrl: map['videoUrl'] as String?,
+      latitude: (map['latitude'] as num?)?.toDouble(),
+      longitude: (map['longitude'] as num?)?.toDouble(),
+      advertiserName: map['advertiserName'] as String?,
+      advertiserPhone: map['advertiserPhone'] as String?,
       createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -155,6 +172,11 @@ class Property {
       'images': images,
       'status': status.name,
       'featured': featured,
+      'videoUrl': videoUrl,
+      'latitude': latitude,
+      'longitude': longitude,
+      'advertiserName': advertiserName,
+      'advertiserPhone': advertiserPhone,
       if (isNew) 'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -174,6 +196,11 @@ class Property {
     List<String>? images,
     PropertyStatus? status,
     bool? featured,
+    String? videoUrl,
+    double? latitude,
+    double? longitude,
+    String? advertiserName,
+    String? advertiserPhone,
   }) {
     return Property(
       id: id,
@@ -190,6 +217,11 @@ class Property {
       images: images ?? this.images,
       status: status ?? this.status,
       featured: featured ?? this.featured,
+      videoUrl: videoUrl ?? this.videoUrl,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      advertiserName: advertiserName ?? this.advertiserName,
+      advertiserPhone: advertiserPhone ?? this.advertiserPhone,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
