@@ -6,7 +6,17 @@ service cloud.firestore {
     // ملاحظة: الـ WhatsApp Bot هيقرأ عن طريق Admin SDK في Cloud Functions،
     // وده بيتخطّى القواعد دي تلقائياً، فمحتاجش صلاحية قراءة عامة هنا.
     match /properties/{propertyId} {
-      allow read, write: if request.auth != null;
+      // القراءة متاحة للجميع (زوار الموقع يتصفحوا العقارات)
+      allow read: if true;
+      // الإضافة/التعديل/الحذف للمسجَّلين فقط (المعلنين/الأدمن)
+      allow write: if request.auth != null;
+    }
+
+    // البلاغات: أي زائر يقدر يرسل بلاغ (create فقط)،
+    // والقراءة/المراجعة للأدمن المسجَّل فقط.
+    match /reports/{reportId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
     }
   }
 }
