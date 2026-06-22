@@ -29,6 +29,9 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
   late final TextEditingController _city;
   late final TextEditingController _district;
   late final TextEditingController _description;
+  late final TextEditingController _advertiserName;
+  late final TextEditingController _advertiserPhone;
+  late final TextEditingController _videoUrl;
 
   late PropertyType _type;
   late ListingType _listingType;
@@ -57,6 +60,9 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
     _city = TextEditingController(text: p?.city ?? '');
     _district = TextEditingController(text: p?.district ?? '');
     _description = TextEditingController(text: p?.description ?? '');
+    _advertiserName = TextEditingController(text: p?.advertiserName ?? '');
+    _advertiserPhone = TextEditingController(text: p?.advertiserPhone ?? '');
+    _videoUrl = TextEditingController(text: p?.videoUrl ?? '');
     _type = p?.type ?? PropertyType.apartment;
     _listingType = p?.listingType ?? ListingType.sale;
     _status = p?.status ?? PropertyStatus.available;
@@ -75,6 +81,9 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
       _city,
       _district,
       _description,
+      _advertiserName,
+      _advertiserPhone,
+      _videoUrl,
     ]) {
       c.dispose();
     }
@@ -121,6 +130,14 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
         images: [..._images, ...uploaded],
         status: _status,
         featured: _featured,
+        advertiserName: _advertiserName.text.trim().isEmpty
+            ? null
+            : _advertiserName.text.trim(),
+        advertiserPhone: _advertiserPhone.text.trim().isEmpty
+            ? null
+            : _advertiserPhone.text.trim(),
+        videoUrl:
+            _videoUrl.text.trim().isEmpty ? null : _videoUrl.text.trim(),
       );
 
       if (_isEdit) {
@@ -223,6 +240,25 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
                   ),
                   const SizedBox(height: 12),
                   _text(_description, 'الوصف', maxLines: 4),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  const Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text('بيانات المعلن والوسائط',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: _text(_advertiserName, 'اسم المعلن')),
+                      const SizedBox(width: 12),
+                      Expanded(
+                          child: _text(_advertiserPhone, 'تليفون المعلن')),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _text(_videoUrl, 'رابط فيديو (YouTube) — اختياري'),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<PropertyStatus>(
                     initialValue: _status,
