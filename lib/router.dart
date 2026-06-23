@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'screens/login_screen.dart';
 import 'screens/properties_list_screen.dart';
+import 'screens/signup_screen.dart';
 import 'services/auth_service.dart';
 import 'public/advertiser_page.dart';
 import 'public/favorites_page.dart';
@@ -27,8 +28,11 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/property/:id',
-      builder: (_, state) =>
-          PropertyDetailPage(propertyId: state.pathParameters['id']!),
+      builder: (_, state) {
+        final id = state.pathParameters['id']!;
+        // key بالـ id عشان الصفحة تتحدّث عند الانتقال من عقار لعقار
+        return PropertyDetailPage(key: ValueKey(id), propertyId: id);
+      },
     ),
     GoRoute(path: '/packages', builder: (_, _) => const PackagesPage()),
     GoRoute(path: '/favorites', builder: (_, _) => const FavoritesPage()),
@@ -47,9 +51,16 @@ final appRouter = GoRouter(
   ],
 );
 
-/// بوابة الأدمن: تعرض الدخول أو لوحة التحكم حسب حالة تسجيل الدخول.
-class AdminGate extends StatelessWidget {
+/// بوابة الأدمن: تعرض الدخول/التسجيل أو لوحة التحكم حسب حالة تسجيل الدخول.
+class AdminGate extends StatefulWidget {
   const AdminGate({super.key});
+
+  @override
+  State<AdminGate> createState() => _AdminGateState();
+}
+
+class _AdminGateState extends State<AdminGate> {
+  bool _showSignup = false;
 
   @override
   Widget build(BuildContext context) {
@@ -62,9 +73,12 @@ class AdminGate extends StatelessWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        return snapshot.hasData
-            ? const PropertiesListScreen()
-            : const LoginScreen();
+        if (snapshot.hasData) return const PropertiesListScreen();
+        return _showSignup
+            ? SignupScreen(
+                onSwitchToLogin: () => setState(() => _showSignup = false))
+            : LoginScreen(
+                onSwitchToSignup: () => setState(() => _showSignup = true));
       },
     );
   }
