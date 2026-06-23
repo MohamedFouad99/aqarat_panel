@@ -97,6 +97,8 @@ class Property {
   // بيانات المعلن
   final String? advertiserName;
   final String? advertiserPhone;
+  /// مالك الإعلان — uid في Firebase Auth.
+  final String? ownerId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -120,6 +122,7 @@ class Property {
     this.longitude,
     this.advertiserName,
     this.advertiserPhone,
+    this.ownerId,
     this.createdAt,
     this.updatedAt,
   });
@@ -146,6 +149,7 @@ class Property {
       longitude: (map['longitude'] as num?)?.toDouble(),
       advertiserName: map['advertiserName'] as String?,
       advertiserPhone: map['advertiserPhone'] as String?,
+      ownerId: map['ownerId'] as String?,
       createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -177,6 +181,7 @@ class Property {
       'longitude': longitude,
       'advertiserName': advertiserName,
       'advertiserPhone': advertiserPhone,
+      if (ownerId != null) 'ownerId': ownerId,
       if (isNew) 'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -201,6 +206,7 @@ class Property {
     double? longitude,
     String? advertiserName,
     String? advertiserPhone,
+    String? ownerId,
   }) {
     return Property(
       id: id,
@@ -222,6 +228,7 @@ class Property {
       longitude: longitude ?? this.longitude,
       advertiserName: advertiserName ?? this.advertiserName,
       advertiserPhone: advertiserPhone ?? this.advertiserPhone,
+      ownerId: ownerId ?? this.ownerId,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );

@@ -10,6 +10,7 @@ import '../utils/format.dart';
 import 'widgets/favorite_button.dart';
 import 'widgets/property_grid.dart';
 import 'widgets/public_page.dart';
+import 'widgets/static_map.dart';
 
 class PropertyDetailPage extends StatefulWidget {
   const PropertyDetailPage({super.key, required this.propertyId});
@@ -134,12 +135,7 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
           const SizedBox(height: 20),
           _section(
             'الموقع على الخريطة',
-            OutlinedButton.icon(
-              onPressed: () => _open(
-                  'https://www.google.com/maps?q=${p.latitude},${p.longitude}'),
-              icon: const Icon(Icons.map_outlined),
-              label: const Text('فتح في خرائط جوجل'),
-            ),
+            StaticMap(latitude: p.latitude!, longitude: p.longitude!),
           ),
         ],
         const SizedBox(height: 24),
