@@ -26,6 +26,19 @@ class PropertyService {
         .map((snap) => snap.docs.map(Property.fromDoc).toList());
   }
 
+  /// عقارات معلن محدد فقط — لشاشة "إعلاناتي" في لوحة المعلن.
+  Stream<List<Property>> watchByOwner(String ownerId) {
+    return _col
+        .where('ownerId', isEqualTo: ownerId)
+        .snapshots()
+        .map((snap) {
+          final list = snap.docs.map(Property.fromDoc).toList()
+            ..sort((a, b) => (b.createdAt ?? DateTime(0))
+                .compareTo(a.createdAt ?? DateTime(0)));
+          return list;
+        });
+  }
+
   Future<Property?> getById(String id) async {
     final doc = await _col.doc(id).get();
     if (!doc.exists) return null;

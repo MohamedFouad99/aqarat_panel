@@ -18,6 +18,15 @@ class AuthService {
     );
   }
 
+  /// تسجيل معلن جديد — يرجّع الـ uid.
+  Future<String> signUp(String email, String password) async {
+    final cred = await _auth.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+    return cred.user!.uid;
+  }
+
   Future<void> signOut() => _auth.signOut();
 
   /// رسالة خطأ بالعربي حسب نوع المشكلة.
@@ -34,6 +43,10 @@ class AuthService {
           return 'الحساب موقوف';
         case 'too-many-requests':
           return 'محاولات كثيرة، حاول لاحقاً';
+        case 'email-already-in-use':
+          return 'الإيميل ده مسجَّل بالفعل';
+        case 'weak-password':
+          return 'كلمة المرور ضعيفة (6 حروف على الأقل)';
         default:
           return 'تعذّر تسجيل الدخول (${error.code})';
       }
