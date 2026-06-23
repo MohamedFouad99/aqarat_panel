@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/property.dart';
+import '../services/auth_service.dart';
 import '../services/property_service.dart';
+import '../services/user_service.dart';
 
 class PropertyFormScreen extends StatefulWidget {
   /// لو null يبقى إضافة جديدة، غير كده تعديل.
@@ -19,6 +21,8 @@ class PropertyFormScreen extends StatefulWidget {
 class _PropertyFormScreenState extends State<PropertyFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _service = PropertyService();
+  final _users = UserService();
+  final _auth = AuthService();
   final _picker = ImagePicker();
 
   late final TextEditingController _title;
@@ -32,6 +36,58 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
   late final TextEditingController _advertiserName;
   late final TextEditingController _advertiserPhone;
   late final TextEditingController _videoUrl;
+  late final TextEditingController _latitude;
+  late final TextEditingController _longitude;
+  late final TextEditingController _mapsLink;
+
+  Future<void> _prefillFromProfile() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+    final profile = await _users.get(uid);
+    if (profile == null || !mounted) return;
+    setState(() {
+      if (_advertiserName.text.isEmpty) _advertiserName.text = profile.name;
+      if (_advertiserPhone.text.isEmpty) _advertiserPhone.text = profile.phone;
+    });
+  }
+
+  /// استخراج إحداثيات من رابط Google Maps بأشكاله المختلفة.
+  void _parseMapsLink() {
+    final url = _mapsLink.text.trim();
+    if (url.isEmpty) {
+      _snack('الصق رابط الخريطة الأول');
+      return;
+    }
+
+    // نجرّب أكتر من شكل بالترتيب:
+    final patterns = <RegExp>[
+      RegExp(r'@(-?\d+\.\d+),(-?\d+\.\d+)'), // .../@30.04,31.23,15z
+      RegExp(r'!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)'), // ...!3d30.04!4d31.23
+      RegExp(r'[?&]q(?:uery)?=(-?\d+\.\d+),(-?\d+\.\d+)'), // ?q=30.04,31.23
+      RegExp(r'(-?\d+\.\d+),\s*(-?\d+\.\d+)'), // أي رقمين بفاصلة
+    ];
+
+    for (final re in patterns) {
+      final m = re.firstMatch(url);
+      if (m != null) {
+        setState(() {
+          _latitude.text = m.group(1)!;
+          _longitude.text = m.group(2)!;
+          _mapsLink.clear();
+        });
+        _snack('تم استخراج الإحداثيات ✅ (${m.group(1)}, ${m.group(2)})');
+        return;
+      }
+    }
+
+    _snack(
+        'الرابط ده مفيهوش إحداثيات. لو رابط مختصر (goo.gl) افتحه الأول وانسخ الرابط الكامل، أو دخّل الإحداثيات يدوياً.');
+  }
+
+  void _snack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
 
   late PropertyType _type;
   late ListingType _listingType;
@@ -63,6 +119,11 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
     _advertiserName = TextEditingController(text: p?.advertiserName ?? '');
     _advertiserPhone = TextEditingController(text: p?.advertiserPhone ?? '');
     _videoUrl = TextEditingController(text: p?.videoUrl ?? '');
+    _latitude = TextEditingController(text: p?.latitude?.toString() ?? '');
+    _longitude = TextEditingController(text: p?.longitude?.toString() ?? '');
+    _mapsLink = TextEditingController();
+    // في حالة الإضافة الجديدة، نملا بيانات المعلن من ملفه التعريفي تلقائياً.
+    if (!_isEdit) _prefillFromProfile();
     _type = p?.type ?? PropertyType.apartment;
     _listingType = p?.listingType ?? ListingType.sale;
     _status = p?.status ?? PropertyStatus.available;
@@ -84,6 +145,9 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
       _advertiserName,
       _advertiserPhone,
       _videoUrl,
+      _latitude,
+      _longitude,
+      _mapsLink,
     ]) {
       c.dispose();
     }
@@ -138,6 +202,9 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
             : _advertiserPhone.text.trim(),
         videoUrl:
             _videoUrl.text.trim().isEmpty ? null : _videoUrl.text.trim(),
+        latitude: double.tryParse(_latitude.text.trim()),
+        longitude: double.tryParse(_longitude.text.trim()),
+        ownerId: widget.property?.ownerId ?? _auth.currentUser?.uid,
       );
 
       if (_isEdit) {
@@ -259,6 +326,45 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
                   ),
                   const SizedBox(height: 12),
                   _text(_videoUrl, 'رابط فيديو (YouTube) — اختياري'),
+                  const SizedBox(height: 16),
+                  const Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text('موقع العقار على الخريطة',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _mapsLink,
+                          decoration: const InputDecoration(
+                            labelText: 'الصق رابط من Google Maps',
+                            hintText:
+                                'https://maps.google.com/?q=30.0444,31.2357',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: _parseMapsLink,
+                        icon: const Icon(Icons.my_location),
+                        label: const Text('استخراج'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                          child: _text(_latitude, 'خط العرض (lat)',
+                              number: true)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                          child: _text(_longitude, 'خط الطول (lng)',
+                              number: true)),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<PropertyStatus>(
                     initialValue: _status,

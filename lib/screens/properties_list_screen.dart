@@ -75,7 +75,7 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('العقارات'),
+          title: const Text('إعلاناتي'),
           actions: [
             IconButton(
               tooltip: 'تسجيل الخروج',
@@ -95,7 +95,9 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
             const Divider(height: 1),
             Expanded(
               child: StreamBuilder<List<Property>>(
-                stream: _service.watchProperties(),
+                stream: _auth.currentUser != null
+                    ? _service.watchByOwner(_auth.currentUser!.uid)
+                    : _service.watchProperties(),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Center(child: Text('خطأ: ${snapshot.error}'));
