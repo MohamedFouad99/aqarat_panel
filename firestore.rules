@@ -8,8 +8,13 @@ service cloud.firestore {
     match /properties/{propertyId} {
       // القراءة متاحة للجميع (زوار الموقع يتصفحوا العقارات)
       allow read: if true;
-      // الإضافة/التعديل/الحذف للمسجَّلين فقط (المعلنين/الأدمن)
-      allow write: if request.auth != null;
+      // الإضافة: مسجَّل + ownerId = uid الحالي
+      allow create: if request.auth != null
+        && request.resource.data.ownerId == request.auth.uid;
+      // التعديل/الحذف: مالك الإعلان فقط (مع توافق رجعي للعقارات القديمة بدون ownerId)
+      allow update, delete: if request.auth != null
+        && (!('ownerId' in resource.data) ||
+            resource.data.ownerId == request.auth.uid);
     }
 
     // البلاغات: أي زائر يقدر يرسل بلاغ (create فقط)،
@@ -17,6 +22,13 @@ service cloud.firestore {
     match /reports/{reportId} {
       allow create: if true;
       allow read, update, delete: if request.auth != null;
+    }
+
+    // ملف المستخدم (بيانات المعلن): يقرأها الجميع (لعرض ملف المعلن)،
+    // ويعدّلها صاحبها فقط.
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }

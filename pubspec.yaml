@@ -49,6 +49,10 @@ dependencies:
   # حفظ المفضلة في المتصفح
   shared_preferences: ^2.3.2
 
+  # خريطة تفاعلية مجانية (OpenStreetMap) — بدون مفتاح ولا فوترة
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
   # Firebase
   firebase_core: ^3.6.0
   cloud_firestore: ^5.4.4
