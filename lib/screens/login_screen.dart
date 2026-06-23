@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.onSwitchToSignup});
+
+  final VoidCallback? onSwitchToSignup;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -117,6 +119,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
+                        if (widget.onSwitchToSignup != null) ...[
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: widget.onSwitchToSignup,
+                            child: const Text('مفيش حساب؟ سجّل كمعلن جديد'),
+                          ),
+                        ],
                       ],
                     ),
                   ),
