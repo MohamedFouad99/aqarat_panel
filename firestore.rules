@@ -24,6 +24,18 @@ service cloud.firestore {
       allow read, update, delete: if request.auth != null;
     }
 
+    // طلبات العقارات: أي زائر يقدر يرسل طلب،
+    // والوسطاء المسجَّلين يشوفوها ويتواصلوا.
+    match /requests/{requestId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+
+    // عدّاد مشاهدات العقارات: قراءة وزيادة متاحة للجميع.
+    match /views/{propertyId} {
+      allow read, write: if true;
+    }
+
     // ملف المستخدم (بيانات المعلن): يقرأها الجميع (لعرض ملف المعلن)،
     // ويعدّلها صاحبها فقط.
     match /users/{userId} {

@@ -4,7 +4,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'firebase_options.dart';
 import 'router.dart';
+import 'services/compare_service.dart';
 import 'services/favorites_service.dart';
+import 'services/recently_viewed_service.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -13,6 +15,8 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await FavoritesService.instance.init();
+  await RecentlyViewedService.instance.init();
+  await CompareService.instance.init();
   runApp(const AqaratApp());
 }
 
