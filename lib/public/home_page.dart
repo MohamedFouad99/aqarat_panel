@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../models/property.dart';
 import '../services/property_service.dart';
+import '../services/recently_viewed_service.dart';
 import '../theme/app_theme.dart';
 import 'widgets/property_card.dart';
 import 'widgets/public_page.dart';
@@ -41,7 +42,10 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         children: [
           _hero(context),
+          _statsBand(),
           _categories(context),
+          _requestCta(context),
+          _recentlyViewed(),
           _featured(),
         ],
       ),
@@ -145,6 +149,156 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // شريط إحصائيات
+  Widget _statsBand() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1000),
+          child: StreamBuilder<List<Property>>(
+            stream: _service.watchProperties(),
+            builder: (context, snapshot) {
+              final all = (snapshot.data ?? [])
+                  .where((p) => p.status == PropertyStatus.available)
+                  .toList();
+              final cities = all.map((p) => p.city).toSet()..remove('');
+              final agents = all
+                  .map((p) => p.advertiserName ?? '')
+                  .where((e) => e.isNotEmpty)
+                  .toSet();
+              return Wrap(
+                alignment: WrapAlignment.spaceEvenly,
+                spacing: 24,
+                runSpacing: 20,
+                children: [
+                  _statItem('${all.length}', 'عقار متاح', Icons.home_work),
+                  _statItem('${cities.length}', 'مدينة', Icons.location_city),
+                  _statItem('${agents.length}', 'وسيط', Icons.groups),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _statItem(String value, String label, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: AppColors.gold, size: 30),
+        const SizedBox(height: 6),
+        Text(value,
+            style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: AppColors.navy)),
+        Text(label, style: const TextStyle(color: AppColors.textMuted)),
+      ],
+    );
+  }
+
+  // قسم "شاهدت مؤخراً"
+  Widget _recentlyViewed() {
+    return ValueListenableBuilder<List<String>>(
+      valueListenable: RecentlyViewedService.instance.ids,
+      builder: (context, ids, _) {
+        if (ids.isEmpty) return const SizedBox.shrink();
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: StreamBuilder<List<Property>>(
+                stream: _service.watchProperties(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const SizedBox.shrink();
+                  final byId = {for (final p in snapshot.data!) p.id: p};
+                  final items = ids
+                      .map((id) => byId[id])
+                      .whereType<Property>()
+                      .take(4)
+                      .toList();
+                  if (items.isEmpty) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('شاهدت مؤخراً',
+                          style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.navy)),
+                      const SizedBox(height: 16),
+                      _grid(context, items),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // بانر "اطلب عقارك"
+  Widget _requestCta(BuildContext context) {
+    final wide = MediaQuery.of(context).size.width > 720;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Container(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                  colors: [AppColors.gold, AppColors.goldLight]),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Flex(
+              direction: wide ? Axis.horizontal : Axis.vertical,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: wide ? 1 : 0,
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('ما لقيت اللي تدوّر عليه؟',
+                          style: TextStyle(
+                              color: AppColors.navy,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold)),
+                      SizedBox(height: 6),
+                      Text(
+                          'اكتب طلبك ويوصلك أفضل العروض من الوسطاء — مجاناً.',
+                          style: TextStyle(color: AppColors.navy, fontSize: 15)),
+                    ],
+                  ),
+                ),
+                SizedBox(width: wide ? 16 : 0, height: wide ? 0 : 16),
+                FilledButton.icon(
+                  onPressed: () => context.go('/request'),
+                  icon: const Icon(Icons.add_home_work),
+                  label: const Text('اطلب عقارك الآن'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.navy,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 16),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

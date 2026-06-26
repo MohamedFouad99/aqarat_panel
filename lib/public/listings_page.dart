@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/property.dart';
 import '../services/property_service.dart';
+import '../services/views_service.dart';
 import '../theme/app_theme.dart';
 import 'widgets/property_card.dart';
 import 'widgets/public_page.dart';
@@ -24,6 +25,8 @@ class ListingsPage extends StatefulWidget {
 
 class _ListingsPageState extends State<ListingsPage> {
   final _service = PropertyService();
+  final _viewsService = ViewsService();
+  Map<String, int> _views = {};
   late final TextEditingController _q;
 
   ListingType? _listing;
@@ -44,6 +47,10 @@ class _ListingsPageState extends State<ListingsPage> {
       case 'priceDesc':
         list.sort((a, b) => b.price.compareTo(a.price));
         break;
+      case 'mostViewed':
+        list.sort((a, b) =>
+            (_views[b.id] ?? 0).compareTo(_views[a.id] ?? 0));
+        break;
       // newest: محفوظ ترتيبه من Firestore (الأحدث أولاً)
     }
     return list;
@@ -59,6 +66,9 @@ class _ListingsPageState extends State<ListingsPage> {
     if (widget.initialType != null) {
       _type = PropertyType.fromString(widget.initialType);
     }
+    _viewsService.fetchAll().then((v) {
+      if (mounted) setState(() => _views = v);
+    });
   }
 
   @override
@@ -138,6 +148,9 @@ class _ListingsPageState extends State<ListingsPage> {
                                     DropdownMenuItem(
                                         value: 'priceDesc',
                                         child: Text('الأعلى سعراً')),
+                                    DropdownMenuItem(
+                                        value: 'mostViewed',
+                                        child: Text('الأكثر مشاهدة')),
                                   ],
                                   onChanged: (v) =>
                                       setState(() => _sort = v ?? 'newest'),
