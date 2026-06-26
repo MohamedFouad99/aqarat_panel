@@ -133,7 +133,7 @@ class PackagesPage extends StatelessWidget {
               const SizedBox(width: 4),
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
-                child: Text('ج.م / ${p.period}',
+                child: Text('ريال / ${p.period}',
                     style: const TextStyle(color: AppColors.textMuted)),
               ),
             ],

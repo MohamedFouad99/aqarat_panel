@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/property.dart';
+import '../services/compare_service.dart';
 import '../services/property_service.dart';
+import '../services/recently_viewed_service.dart';
 import '../services/report_service.dart';
+import '../services/views_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/format.dart';
 import 'widgets/favorite_button.dart';
@@ -24,6 +28,7 @@ class PropertyDetailPage extends StatefulWidget {
 class _PropertyDetailPageState extends State<PropertyDetailPage> {
   final _service = PropertyService();
   final _reportService = ReportService();
+  final _viewsService = ViewsService();
   late Future<Property?> _future;
   int _activeImage = 0;
 
@@ -31,11 +36,50 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
   void initState() {
     super.initState();
     _future = _service.getById(widget.propertyId);
+    // تسجيل المشاهدة + إضافته لـ "آخر ما شاهدت"
+    _viewsService.increment(widget.propertyId);
+    RecentlyViewedService.instance.add(widget.propertyId);
   }
 
   Future<void> _open(String url) async {
     final uri = Uri.tryParse(url);
     if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  /// مشاركة الإعلان: نسخ الرابط + خيار واتساب.
+  Future<void> _share(BuildContext context, Property p) async {
+    final url = Uri.base.resolve('/property/${p.id}').toString();
+    final text = '${p.title} - $url';
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.copy),
+              title: const Text('نسخ الرابط'),
+              onTap: () async {
+                await Clipboard.setData(ClipboardData(text: url));
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('تم نسخ الرابط ✅')));
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.chat, color: Color(0xFF25D366)),
+              title: const Text('مشاركة عبر واتساب'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _open('https://wa.me/?text=${Uri.encodeComponent(text)}');
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -340,6 +384,11 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
                 const SizedBox(width: 6),
                 _tag(p.type.arabicLabel, AppColors.bg, AppColors.navy),
                 const Spacer(),
+                IconButton(
+                  tooltip: 'مشاركة',
+                  onPressed: () => _share(context, p),
+                  icon: const Icon(Icons.share_outlined, color: AppColors.navy),
+                ),
                 FavoriteButton(propertyId: p.id),
               ],
             ),
@@ -362,6 +411,20 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
                 Expanded(child: Text('${p.city} · ${p.district}')),
               ],
             ),
+            const SizedBox(height: 6),
+            StreamBuilder<int>(
+              stream: _viewsService.watch(widget.propertyId),
+              builder: (_, s) => Row(
+                children: [
+                  const Icon(Icons.visibility_outlined,
+                      size: 16, color: AppColors.textMuted),
+                  const SizedBox(width: 4),
+                  Text('${s.data ?? 0} مشاهدة',
+                      style: const TextStyle(
+                          color: AppColors.textMuted, fontSize: 13)),
+                ],
+              ),
+            ),
             const Divider(height: 28),
             Wrap(
               spacing: 18,
@@ -373,6 +436,29 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
                 if (p.bathrooms > 0)
                   _spec(Icons.bathtub_outlined, '${p.bathrooms}', 'حمامات'),
               ],
+            ),
+            const SizedBox(height: 14),
+            ValueListenableBuilder<List<String>>(
+              valueListenable: CompareService.instance.ids,
+              builder: (context, ids, _) {
+                final inList = ids.contains(p.id);
+                return SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      final ok = CompareService.instance.toggle(p.id);
+                      if (!ok && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text(
+                                'الحد الأقصى ${CompareService.max} عقارات للمقارنة')));
+                      }
+                    },
+                    icon: Icon(inList ? Icons.check_circle : Icons.compare_arrows,
+                        size: 18),
+                    label: Text(inList ? 'في المقارنة ✓' : 'أضف للمقارنة'),
+                  ),
+                );
+              },
             ),
             const Divider(height: 28),
             // المعلن
