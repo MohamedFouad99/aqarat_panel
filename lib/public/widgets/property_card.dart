@@ -38,10 +38,17 @@ class PropertyCard extends StatelessWidget {
                 Positioned(
                   top: 10,
                   right: 10,
-                  child: _chip(
-                    p.listingType.arabicLabel,
-                    bg: AppColors.navy,
-                    fg: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _chip(p.listingType.arabicLabel,
+                          bg: AppColors.navy, fg: Colors.white),
+                      if (_isNew(p)) ...[
+                        const SizedBox(height: 6),
+                        _chip('🆕 جديد',
+                            bg: AppColors.success, fg: Colors.white),
+                      ],
+                    ],
                   ),
                 ),
                 Positioned(
@@ -132,6 +139,13 @@ class PropertyCard extends StatelessWidget {
           Text(label, style: const TextStyle(fontSize: 13)),
         ],
       );
+
+  // "جديد" لو اتضاف خلال آخر 7 أيام
+  bool _isNew(Property p) {
+    final c = p.createdAt;
+    if (c == null) return false;
+    return DateTime.now().difference(c).inDays < 7;
+  }
 
   Widget _chip(String text, {required Color bg, required Color fg}) =>
       Container(
