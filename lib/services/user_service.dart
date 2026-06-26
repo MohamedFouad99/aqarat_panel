@@ -6,12 +6,14 @@ class UserProfile {
   final String name;
   final String phone;
   final String email;
+  final bool verified; // معلن موثّق (يضبطه الأدمن)
 
   UserProfile(
       {required this.uid,
       required this.name,
       required this.phone,
-      required this.email});
+      required this.email,
+      this.verified = false});
 
   factory UserProfile.fromDoc(DocumentSnapshot doc) {
     final m = doc.data() as Map<String, dynamic>? ?? {};
@@ -20,6 +22,7 @@ class UserProfile {
       name: m['name'] as String? ?? '',
       phone: m['phone'] as String? ?? '',
       email: m['email'] as String? ?? '',
+      verified: m['verified'] as bool? ?? false,
     );
   }
 }

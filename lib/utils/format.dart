@@ -2,8 +2,8 @@ import 'package:intl/intl.dart';
 
 final _priceFormat = NumberFormat.decimalPattern('en');
 
-/// تنسيق السعر: 2500000 -> "2,500,000 ج.م"
-String formatPrice(num value) => '${_priceFormat.format(value)} ج.م';
+/// تنسيق السعر: 2500000 -> "2,500,000 ريال"
+String formatPrice(num value) => '${_priceFormat.format(value)} ريال';
 
 /// سعر مختصر: 2500000 -> "2.5 مليون"
 String formatPriceShort(num value) {
