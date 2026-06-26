@@ -5,14 +5,20 @@ import 'screens/login_screen.dart';
 import 'screens/properties_list_screen.dart';
 import 'screens/signup_screen.dart';
 import 'services/auth_service.dart';
+import 'public/about_page.dart';
 import 'public/advertiser_page.dart';
+import 'public/agents_page.dart';
+import 'public/compare_page.dart';
+import 'public/map_page.dart';
 import 'public/favorites_page.dart';
+import 'public/mortgage_page.dart';
 import 'public/home_page.dart';
 import 'public/listings_page.dart';
 import 'public/my_subscription_page.dart';
 import 'public/notifications_page.dart';
 import 'public/packages_page.dart';
 import 'public/property_detail_page.dart';
+import 'public/request_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -35,6 +41,12 @@ final appRouter = GoRouter(
       },
     ),
     GoRoute(path: '/packages', builder: (_, _) => const PackagesPage()),
+    GoRoute(path: '/request', builder: (_, _) => const RequestPage()),
+    GoRoute(path: '/agents', builder: (_, _) => const AgentsPage()),
+    GoRoute(path: '/map', builder: (_, _) => const MapPage()),
+    GoRoute(path: '/about', builder: (_, _) => const AboutPage()),
+    GoRoute(path: '/mortgage', builder: (_, _) => const MortgagePage()),
+    GoRoute(path: '/compare', builder: (_, _) => const ComparePage()),
     GoRoute(path: '/favorites', builder: (_, _) => const FavoritesPage()),
     GoRoute(
         path: '/notifications', builder: (_, _) => const NotificationsPage()),
