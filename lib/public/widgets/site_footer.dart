@@ -3,80 +3,93 @@ import 'package:go_router/go_router.dart';
 
 import '../../theme/app_theme.dart';
 
-/// فوتر الموقع.
+/// فوتر الموقع — تصميم مرتّب ومتوسّط.
 class SiteFooter extends StatelessWidget {
   const SiteFooter({super.key});
 
+  static const _links = [
+    ('الرئيسية', '/'),
+    ('العقارات', '/properties'),
+    ('الخريطة', '/map'),
+    ('اطلب عقارك', '/request'),
+    ('دليل الوسطاء', '/agents'),
+    ('حاسبة التمويل', '/mortgage'),
+    ('الباقات', '/packages'),
+    ('من نحن', '/about'),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final wide = MediaQuery.of(context).size.width > 700;
     return Container(
       width: double.infinity,
       color: AppColors.navy,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
       child: Column(
         children: [
-          Flex(
-            direction: wide ? Axis.horizontal : Axis.vertical,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.apartment, color: AppColors.gold, size: 24),
-                      SizedBox(width: 8),
-                      Text('عقاراتي',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const SizedBox(
-                    width: 280,
-                    child: Text(
-                      'منصة عقارية لعرض وتصفّح العقارات للبيع والإيجار في مصر.',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
-                    ),
-                  ),
-                ],
-              ),
-              if (!wide) const SizedBox(height: 20),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('روابط',
-                      style: TextStyle(
-                          color: AppColors.gold, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  _link(context, 'الرئيسية', '/'),
-                  _link(context, 'العقارات', '/properties'),
-                  _link(context, 'الباقات', '/packages'),
-                ],
-              ),
+          // الشعار
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.apartment, color: AppColors.gold, size: 28),
+              SizedBox(width: 8),
+              Text('عقاراتي',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold)),
             ],
           ),
-          const Divider(color: Colors.white24, height: 40),
+          const SizedBox(height: 10),
+          const SizedBox(
+            width: 360,
+            child: Text(
+              'منصة عقارية لعرض وتصفّح العقارات للبيع والإيجار في السعودية.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.6),
+            ),
+          ),
+          const SizedBox(height: 24),
+          // الروابط في صف متوسّط ومتباعد
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final l in _links) _LinkChip(label: l.$1, path: l.$2),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const Divider(color: Colors.white24),
+          const SizedBox(height: 16),
           const Text(
             '© 2026 عقاراتي — جميع الحقوق محفوظة',
+            textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white54, fontSize: 12),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _link(BuildContext context, String label, String path) => Padding(
-        padding: const EdgeInsets.only(bottom: 4),
-        child: InkWell(
-          onTap: () => context.go(path),
-          child: Text(label,
-              style: const TextStyle(color: Colors.white70, fontSize: 13)),
+class _LinkChip extends StatelessWidget {
+  const _LinkChip({required this.label, required this.path});
+  final String label;
+  final String path;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: () => context.go(path),
+      style: TextButton.styleFrom(
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
         ),
-      );
+      ),
+      child: Text(label,
+          style: const TextStyle(fontSize: 14, color: Colors.white)),
+    );
+  }
 }

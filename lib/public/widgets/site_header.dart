@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../services/compare_service.dart';
 import '../../theme/app_theme.dart';
 
 /// هيدر الموقع العام (شعار + قائمة + زر دخول).
@@ -48,8 +49,24 @@ class SiteHeader extends StatelessWidget implements PreferredSizeWidget {
                 if (wide) ...[
                   _navItem(context, 'الرئيسية', '/', location),
                   _navItem(context, 'العقارات', '/properties', location),
+                  _navItem(context, 'الخريطة', '/map', location),
+                  _navItem(context, 'اطلب عقارك', '/request', location),
+                  _navItem(context, 'الوسطاء', '/agents', location),
                   _navItem(context, 'الباقات', '/packages', location),
                 ],
+                ValueListenableBuilder<List<String>>(
+                  valueListenable: CompareService.instance.ids,
+                  builder: (context, ids, _) => IconButton(
+                    tooltip: 'المقارنة',
+                    onPressed: () => context.go('/compare'),
+                    icon: Badge(
+                      isLabelVisible: ids.isNotEmpty,
+                      label: Text('${ids.length}'),
+                      child: const Icon(Icons.compare_arrows,
+                          color: Colors.white),
+                    ),
+                  ),
+                ),
                 IconButton(
                   tooltip: 'المفضلة',
                   onPressed: () => context.go('/favorites'),
