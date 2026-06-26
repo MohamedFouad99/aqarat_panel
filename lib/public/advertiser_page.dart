@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../models/property.dart';
 import '../services/property_service.dart';
+import '../services/user_service.dart';
 import '../theme/app_theme.dart';
 import 'widgets/property_grid.dart';
 import 'widgets/public_page.dart';
@@ -48,7 +49,14 @@ class AdvertiserPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _profileCard(context, phone, listings.length),
+                    FutureBuilder<UserProfile?>(
+                      future: listings.isNotEmpty &&
+                              listings.first.ownerId != null
+                          ? UserService().get(listings.first.ownerId!)
+                          : Future<UserProfile?>.value(null),
+                      builder: (_, us) => _profileCard(context, phone,
+                          listings.length, us.data?.verified ?? false),
+                    ),
                     const SizedBox(height: 24),
                     Text('إعلانات ${name.isEmpty ? "المعلن" : name}',
                         style: const TextStyle(
@@ -74,7 +82,8 @@ class AdvertiserPage extends StatelessWidget {
     );
   }
 
-  Widget _profileCard(BuildContext context, String? phone, int count) {
+  Widget _profileCard(
+      BuildContext context, String? phone, int count, bool verified) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -96,11 +105,26 @@ class AdvertiserPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name.isEmpty ? 'معلن عقاري' : name,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold)),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(name.isEmpty ? 'معلن عقاري' : name,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold)),
+                    ),
+                    if (verified) ...[
+                      const SizedBox(width: 6),
+                      const Icon(Icons.verified,
+                          color: AppColors.goldLight, size: 22),
+                    ],
+                  ],
+                ),
+                if (verified)
+                  const Text('معلن موثّق',
+                      style: TextStyle(
+                          color: AppColors.goldLight, fontSize: 12)),
                 const SizedBox(height: 4),
                 Text('$count إعلان منشور',
                     style: const TextStyle(color: Colors.white70)),
