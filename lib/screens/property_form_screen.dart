@@ -274,7 +274,7 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: _text(_price, 'السعر (ج.م)',
+                        child: _text(_price, 'السعر (ريال)',
                             required: true, number: true),
                       ),
                       const SizedBox(width: 12),
