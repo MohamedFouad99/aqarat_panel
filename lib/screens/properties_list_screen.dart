@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 import '../models/property.dart';
@@ -80,11 +81,17 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: DefaultTabController(
-        length: 2,
+        length: 3,
         child: Scaffold(
           appBar: AppBar(
-            title: const Text('لوحة المعلن'),
+            title: const Text('لوحة الوسيط'),
             actions: [
+              TextButton.icon(
+                onPressed: () => context.go('/'),
+                icon: const Icon(Icons.public, color: Colors.white, size: 18),
+                label: const Text('لوحة العميل',
+                    style: TextStyle(color: Colors.white)),
+              ),
               IconButton(
                 tooltip: 'تسجيل الخروج',
                 icon: const Icon(Icons.logout),
@@ -92,6 +99,8 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
               ),
             ],
             bottom: const TabBar(
+              isScrollable: true,
+              tabAlignment: TabAlignment.center,
               indicatorColor: Color(0xFFC9A227),
               indicatorWeight: 3,
               labelColor: Color(0xFFE3C766),
@@ -101,6 +110,7 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
               tabs: [
                 Tab(text: 'إعلاناتي', icon: Icon(Icons.home_work)),
                 Tab(text: 'طلبات العملاء', icon: Icon(Icons.person_search)),
+                Tab(text: 'الباقات', icon: Icon(Icons.workspace_premium)),
               ],
             ),
           ),
@@ -113,6 +123,7 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
             children: [
               _myListingsTab(),
               RequestsView(),
+              _packagesTab(),
             ],
           ),
         ),
@@ -205,6 +216,169 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
                 style: const TextStyle(color: Colors.white70, fontSize: 12)),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _packagesTab() {
+    const packages = [
+      ('مجانية', '0', 'دائمًا',
+          ['حتى 3 إعلانات', 'صور للعقار', 'ظهور عادي'], false),
+      ('أساسية', '199', 'شهريًا',
+          ['حتى 20 إعلان', 'صور + فيديو', 'ظهور أعلى في النتائج', 'دعم فني'],
+          true),
+      ('مميزة', '499', 'شهريًا', [
+        'إعلانات غير محدودة',
+        'صور + فيديو + خرائط',
+        'شارة "مميّز" على إعلاناتك',
+        'أولوية في الظهور',
+        'دعم فني سريع',
+      ], false),
+    ];
+    return LayoutBuilder(
+      builder: (context, c) {
+        final wide = c.maxWidth > 760;
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              // هيدر
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                      colors: [Color(0xFF0A2540), Color(0xFF15406B)]),
+                ),
+                child: const Column(
+                  children: [
+                    Text('باقات الاشتراك',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold)),
+                    SizedBox(height: 6),
+                    Text('اختر الباقة المناسبة لنشاطك العقاري',
+                        style: TextStyle(color: Colors.white70, fontSize: 15)),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1000),
+                    child: Flex(
+                      direction: wide ? Axis.horizontal : Axis.vertical,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final p in packages)
+                          wide
+                              ? Expanded(
+                                  child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: _packageCard(p),
+                                ))
+                              : Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _packageCard(p)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _packageCard(
+      (String, String, String, List<String>, bool) p) {
+    final highlighted = p.$5;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: highlighted
+              ? const Color(0xFFC9A227)
+              : const Color(0xFFE3E8EF),
+          width: highlighted ? 2.5 : 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (highlighted)
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                  color: const Color(0xFFC9A227),
+                  borderRadius: BorderRadius.circular(20)),
+              child: const Text('الأكثر شيوعًا',
+                  style: TextStyle(
+                      color: Color(0xFF0A2540),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold)),
+            ),
+          const SizedBox(height: 10),
+          Text(p.$1,
+              style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0A2540))),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(p.$2,
+                  style: const TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0A2540))),
+              const SizedBox(width: 4),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 5),
+                child: Text('ريال / ${p.$3}',
+                    style: const TextStyle(color: Color(0xFF6B7785))),
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+          ...p.$4.map((f) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle,
+                        color: Color(0xFF1E8E4E), size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(f)),
+                  ],
+                ),
+              )),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content:
+                        Text('لتفعيل الباقة تواصل مع الإدارة عبر واتساب 🙏')));
+              },
+              style: highlighted
+                  ? null
+                  : FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF0A2540),
+                      foregroundColor: Colors.white),
+              child: Text(p.$2 == '0' ? 'باقتك الحالية' : 'اشترك الآن'),
+            ),
+          ),
+        ],
       ),
     );
   }

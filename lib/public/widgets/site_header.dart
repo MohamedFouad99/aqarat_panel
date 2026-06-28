@@ -48,11 +48,9 @@ class SiteHeader extends StatelessWidget implements PreferredSizeWidget {
                 const Spacer(),
                 if (wide) ...[
                   _navItem(context, 'الرئيسية', '/', location),
-                  _navItem(context, 'العقارات', '/properties', location),
                   _navItem(context, 'الخريطة', '/map', location),
                   _navItem(context, 'اطلب عقارك', '/request', location),
-                  _navItem(context, 'الوسطاء', '/agents', location),
-                  _navItem(context, 'الباقات', '/packages', location),
+                  _navItem(context, 'حسابي', '/account', location),
                 ],
                 ValueListenableBuilder<List<String>>(
                   valueListenable: CompareService.instance.ids,
@@ -80,8 +78,8 @@ class SiteHeader extends StatelessWidget implements PreferredSizeWidget {
                 const SizedBox(width: 8),
                 FilledButton.icon(
                   onPressed: () => context.go('/admin'),
-                  icon: const Icon(Icons.person_outline, size: 18),
-                  label: const Text('دخول المعلنين'),
+                  icon: const Icon(Icons.dashboard_outlined, size: 18),
+                  label: const Text('لوحة الوسيط'),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.gold,
                     foregroundColor: AppColors.navy,

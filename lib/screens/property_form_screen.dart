@@ -93,6 +93,21 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
   late ListingType _listingType;
   late PropertyStatus _status;
   late bool _featured;
+  late bool _furnished;
+  late final TextEditingController _floor;
+  late final TextEditingController _finishing;
+  late Set<String> _amenities;
+
+  static const _amenityOptions = [
+    'مصعد',
+    'جراج',
+    'أمن وحراسة',
+    'حديقة',
+    'مسبح',
+    'شرفة',
+    'تكييف مركزي',
+    'مطبخ راكب',
+  ];
 
   /// روابط الصور المرفوعة بالفعل (في حالة التعديل).
   late List<String> _images;
@@ -128,6 +143,10 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
     _listingType = p?.listingType ?? ListingType.sale;
     _status = p?.status ?? PropertyStatus.available;
     _featured = p?.featured ?? false;
+    _furnished = p?.furnished ?? false;
+    _floor = TextEditingController(text: p?.floor?.toString() ?? '');
+    _finishing = TextEditingController(text: p?.finishing ?? '');
+    _amenities = {...(p?.amenities ?? const [])};
     _images = List<String>.from(p?.images ?? const []);
   }
 
@@ -148,6 +167,8 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
       _latitude,
       _longitude,
       _mapsLink,
+      _floor,
+      _finishing,
     ]) {
       c.dispose();
     }
@@ -167,6 +188,8 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     try {
+      // نتأكد إن بيانات المعلن اتحمّلت من الملف التعريفي.
+      if (!_isEdit) await _prefillFromProfile();
       // ارفع الصور الجديدة الأول واجمع روابطها.
       final uploaded = <String>[];
       for (var i = 0; i < _pendingImages.length; i++) {
@@ -205,6 +228,11 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
         latitude: double.tryParse(_latitude.text.trim()),
         longitude: double.tryParse(_longitude.text.trim()),
         ownerId: widget.property?.ownerId ?? _auth.currentUser?.uid,
+        furnished: _furnished,
+        floor: int.tryParse(_floor.text.trim()),
+        finishing:
+            _finishing.text.trim().isEmpty ? null : _finishing.text.trim(),
+        amenities: _amenities.toList(),
       );
 
       if (_isEdit) {
@@ -312,8 +340,61 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
                   const SizedBox(height: 8),
                   const Align(
                     alignment: AlignmentDirectional.centerStart,
+                    child: Text('تفاصيل إضافية',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: _text(_floor, 'الدور', number: true)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                          child:
+                              _text(_finishing, 'التشطيب (سوبر لوكس...)')),
+                    ],
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('مفروش'),
+                    value: _furnished,
+                    onChanged: (v) => setState(() => _furnished = v),
+                  ),
+                  const Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text('المميزات',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: _amenityOptions.map((a) {
+                      final sel = _amenities.contains(a);
+                      return FilterChip(
+                        label: Text(a),
+                        selected: sel,
+                        onSelected: (v) => setState(() {
+                          if (v) {
+                            _amenities.add(a);
+                          } else {
+                            _amenities.remove(a);
+                          }
+                        }),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  const Align(
+                    alignment: AlignmentDirectional.centerStart,
                     child: Text('بيانات المعلن والوسائط',
                         style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'بتتعبّى تلقائيًا من ملفك — تقدر تعدّلها لو حبيت.',
+                    style: TextStyle(color: Color(0xFF6B7785), fontSize: 12),
                   ),
                   const SizedBox(height: 12),
                   Row(
