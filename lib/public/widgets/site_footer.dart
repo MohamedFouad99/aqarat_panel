@@ -9,12 +9,9 @@ class SiteFooter extends StatelessWidget {
 
   static const _links = [
     ('الرئيسية', '/'),
-    ('العقارات', '/properties'),
     ('الخريطة', '/map'),
     ('اطلب عقارك', '/request'),
-    ('دليل الوسطاء', '/agents'),
-    ('حاسبة التمويل', '/mortgage'),
-    ('الباقات', '/packages'),
+    ('حسابي', '/account'),
     ('من نحن', '/about'),
   ];
 

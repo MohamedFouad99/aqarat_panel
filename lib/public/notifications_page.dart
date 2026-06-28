@@ -27,11 +27,14 @@ class NotificationsPage extends StatelessWidget {
                   children: const [
                     Icon(Icons.notifications, color: AppColors.gold),
                     SizedBox(width: 8),
-                    Text('الإشعارات',
-                        style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.navy)),
+                    Text(
+                      'الإشعارات',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.navy,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -55,8 +58,7 @@ class NotificationsPage extends StatelessWidget {
                       );
                     }
                     return Column(
-                      children:
-                          latest.map((p) => _tile(context, p)).toList(),
+                      children: latest.map((p) => _tile(context, p)).toList(),
                     );
                   },
                 ),
@@ -76,10 +78,12 @@ class NotificationsPage extends StatelessWidget {
           backgroundColor: AppColors.bg,
           child: Icon(Icons.home_work_outlined, color: AppColors.navy),
         ),
-        title: Text('${p.type.arabicLabel} جديدة في ${p.city}',
-            style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(
+          '${p.type.arabicLabel} جديدة في ${p.city}',
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
         subtitle: Text('${p.title} · ${formatPrice(p.price)}'),
-        trailing: const Icon(Icons.chevron_left),
+        trailing: const Icon(Icons.chevron_right, color: AppColors.navy),
         onTap: () => context.go('/property/${p.id}'),
       ),
     );

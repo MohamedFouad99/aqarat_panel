@@ -105,7 +105,7 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
                     const Text('العقار غير موجود'),
                     const SizedBox(height: 12),
                     FilledButton(
-                      onPressed: () => context.go('/properties'),
+                      onPressed: () => context.go('/'),
                       child: const Text('عودة للعقارات'),
                     ),
                   ],
@@ -144,7 +144,7 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
                 child: const Text('الرئيسية')),
             const Icon(Icons.chevron_left, size: 18),
             TextButton(
-                onPressed: () => context.go('/properties'),
+                onPressed: () => context.go('/'),
                 child: const Text('العقارات')),
             const Icon(Icons.chevron_left, size: 18),
             Text(p.title,
@@ -164,6 +164,23 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
         const SizedBox(height: 28),
         _section('الوصف', Text(p.description.isEmpty ? '—' : p.description,
             style: const TextStyle(height: 1.8, fontSize: 15))),
+        if (p.amenities.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          _section(
+            'المميزات',
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: p.amenities
+                  .map((a) => Chip(
+                        avatar: const Icon(Icons.check_circle,
+                            size: 16, color: AppColors.success),
+                        label: Text(a),
+                      ))
+                  .toList(),
+            ),
+          ),
+        ],
         if (p.videoUrl != null && p.videoUrl!.isNotEmpty) ...[
           const SizedBox(height: 20),
           _section(
@@ -435,6 +452,12 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
                   _spec(Icons.king_bed_outlined, '${p.bedrooms}', 'غرف'),
                 if (p.bathrooms > 0)
                   _spec(Icons.bathtub_outlined, '${p.bathrooms}', 'حمامات'),
+                if (p.floor != null)
+                  _spec(Icons.stairs, '${p.floor}', 'الدور'),
+                _spec(p.furnished ? Icons.chair : Icons.chair_outlined,
+                    p.furnished ? 'مفروش' : 'غير مفروش', 'الفرش'),
+                if (p.finishing != null && p.finishing!.isNotEmpty)
+                  _spec(Icons.brush, p.finishing!, 'التشطيب'),
               ],
             ),
             const SizedBox(height: 14),
