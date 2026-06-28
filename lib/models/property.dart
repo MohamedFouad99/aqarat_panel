@@ -99,6 +99,11 @@ class Property {
   final String? advertiserPhone;
   /// مالك الإعلان — uid في Firebase Auth.
   final String? ownerId;
+  // تفاصيل إضافية
+  final bool furnished; // مفروش؟
+  final int? floor; // الدور
+  final String? finishing; // التشطيب (سوبر لوكس...)
+  final List<String> amenities; // مميزات (مصعد، جراج، حديقة...)
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -123,6 +128,10 @@ class Property {
     this.advertiserName,
     this.advertiserPhone,
     this.ownerId,
+    this.furnished = false,
+    this.floor,
+    this.finishing,
+    this.amenities = const [],
     this.createdAt,
     this.updatedAt,
   });
@@ -150,6 +159,10 @@ class Property {
       advertiserName: map['advertiserName'] as String?,
       advertiserPhone: map['advertiserPhone'] as String?,
       ownerId: map['ownerId'] as String?,
+      furnished: map['furnished'] as bool? ?? false,
+      floor: (map['floor'] as num?)?.toInt(),
+      finishing: map['finishing'] as String?,
+      amenities: (map['amenities'] as List<dynamic>?)?.cast<String>() ?? const [],
       createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -182,6 +195,10 @@ class Property {
       'advertiserName': advertiserName,
       'advertiserPhone': advertiserPhone,
       if (ownerId != null) 'ownerId': ownerId,
+      'furnished': furnished,
+      'floor': floor,
+      'finishing': finishing,
+      'amenities': amenities,
       if (isNew) 'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -207,6 +224,10 @@ class Property {
     String? advertiserName,
     String? advertiserPhone,
     String? ownerId,
+    bool? furnished,
+    int? floor,
+    String? finishing,
+    List<String>? amenities,
   }) {
     return Property(
       id: id,
@@ -229,6 +250,10 @@ class Property {
       advertiserName: advertiserName ?? this.advertiserName,
       advertiserPhone: advertiserPhone ?? this.advertiserPhone,
       ownerId: ownerId ?? this.ownerId,
+      furnished: furnished ?? this.furnished,
+      floor: floor ?? this.floor,
+      finishing: finishing ?? this.finishing,
+      amenities: amenities ?? this.amenities,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
