@@ -97,7 +97,7 @@ class ComparePage extends StatelessWidget {
                   style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
               const SizedBox(height: 16),
               FilledButton(
-                onPressed: () => context.go('/properties'),
+                onPressed: () => context.go('/'),
                 child: const Text('تصفّح العقارات'),
               ),
             ],

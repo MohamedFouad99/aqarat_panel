@@ -76,7 +76,7 @@ class FavoritesPage extends StatelessWidget {
                   style: TextStyle(color: AppColors.textMuted)),
               const SizedBox(height: 16),
               FilledButton(
-                onPressed: () => context.go('/properties'),
+                onPressed: () => context.go('/'),
                 child: const Text('تصفّح العقارات'),
               ),
             ],
