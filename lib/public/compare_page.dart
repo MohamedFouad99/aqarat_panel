@@ -59,6 +59,9 @@ class ComparePage extends StatelessWidget {
                         final items = ids
                             .map((id) => byId[id])
                             .whereType<Property>()
+                            .where((p) =>
+                                p.status == PropertyStatus.available &&
+                                p.visibility == OfferVisibility.public)
                             .toList();
                         if (items.isEmpty) return _empty(context);
                         return SingleChildScrollView(

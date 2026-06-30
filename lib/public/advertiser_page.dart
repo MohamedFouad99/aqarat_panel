@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/property.dart';
@@ -58,6 +59,23 @@ class AdvertiserPage extends StatelessWidget {
                       builder: (_, us) => _profileCard(context, phone,
                           listings.length, us.data?.verified ?? false),
                     ),
+                    if (listings.isNotEmpty &&
+                        (listings.first.ownerId ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: () => context.go(
+                              '/request?broker=${listings.first.ownerId}'
+                              '&bname=${Uri.encodeComponent(name)}'),
+                          icon: const Icon(Icons.add_home_work),
+                          label: const Text('اطلب عقار عبر هذا الوسيط'),
+                          style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.gold,
+                              foregroundColor: AppColors.navy),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     Text('إعلانات ${name.isEmpty ? "المعلن" : name}',
                         style: const TextStyle(

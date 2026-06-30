@@ -48,8 +48,12 @@ class FavoritesPage extends StatelessWidget {
                     return ValueListenableBuilder<Set<String>>(
                       valueListenable: FavoritesService.instance.ids,
                       builder: (context, favIds, _) {
-                        final favs =
-                            all.where((p) => favIds.contains(p.id)).toList();
+                        final favs = all
+                            .where((p) =>
+                                favIds.contains(p.id) &&
+                                p.status == PropertyStatus.available &&
+                                p.visibility == OfferVisibility.public)
+                            .toList();
                         if (favs.isEmpty) return _empty(context);
                         return PropertyGrid(favs);
                       },
