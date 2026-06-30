@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../utils/validators.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key, required this.onSwitchToLogin});
@@ -46,6 +47,7 @@ class _SignupScreenState extends State<SignupScreen> {
         name: _name.text.trim(),
         phone: _phone.text.trim(),
         email: _email.text.trim(),
+        role: UserRole.broker,
       );
       // الـ AuthGate هينقل تلقائياً للوحة بعد نجاح التسجيل.
     } catch (e) {
@@ -94,14 +96,11 @@ class _SignupScreenState extends State<SignupScreen> {
                           controller: _phone,
                           keyboardType: TextInputType.phone,
                           decoration: const InputDecoration(
-                            labelText: 'رقم الموبايل',
+                            labelText: 'رقم الموبايل (سعودي)',
                             prefixIcon: Icon(Icons.phone_outlined),
-                            hintText: '01xxxxxxxxx',
+                            hintText: '05xxxxxxxx',
                           ),
-                          validator: (v) =>
-                              (v == null || v.trim().length < 10)
-                                  ? 'أدخل رقم موبايل صحيح'
-                                  : null,
+                          validator: Validators.saudiPhone,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
