@@ -12,6 +12,8 @@ class BorrowRequest {
   final String toBrokerId; // صاحب العرض
   final double score; // نسبة المطابقة
   final String status; // pending | accepted | rejected
+  // borrow = الوسيط المستلم يطلب عرض غيره | cooperation = صاحب العرض يعرض عرضه
+  final String kind;
   final DateTime? createdAt;
 
   BorrowRequest({
@@ -25,6 +27,7 @@ class BorrowRequest {
     required this.toBrokerId,
     required this.score,
     this.status = 'pending',
+    this.kind = 'borrow',
     this.createdAt,
   });
 
@@ -41,6 +44,7 @@ class BorrowRequest {
       toBrokerId: m['toBrokerId'] as String? ?? '',
       score: (m['score'] as num?)?.toDouble() ?? 0,
       status: m['status'] as String? ?? 'pending',
+      kind: m['kind'] as String? ?? 'borrow',
       createdAt: (m['createdAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -55,6 +59,7 @@ class BorrowRequest {
         'toBrokerId': toBrokerId,
         'score': score,
         'status': status,
+        'kind': kind,
         'createdAt': FieldValue.serverTimestamp(),
       };
 }

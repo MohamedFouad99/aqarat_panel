@@ -18,6 +18,7 @@ class PropertyRequest {
   final String phone;
   final String status; // open | claimed | closed
   final String? claimedBy; // uid الوسيط اللي استلم الطلب
+  final String? targetBrokerId; // طلب خاص موجّه لوسيط معيّن
   final DateTime? createdAt;
 
   PropertyRequest({
@@ -34,6 +35,7 @@ class PropertyRequest {
     required this.phone,
     this.status = 'open',
     this.claimedBy,
+    this.targetBrokerId,
     this.createdAt,
   });
 
@@ -55,6 +57,7 @@ class PropertyRequest {
       phone: m['phone'] as String? ?? '',
       status: m['status'] as String? ?? 'open',
       claimedBy: m['claimedBy'] as String?,
+      targetBrokerId: m['targetBrokerId'] as String?,
       createdAt: (m['createdAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -71,6 +74,8 @@ class PropertyRequest {
         'name': name,
         'phone': phone,
         'status': status,
+        if (claimedBy != null) 'claimedBy': claimedBy,
+        if (targetBrokerId != null) 'targetBrokerId': targetBrokerId,
         'createdAt': FieldValue.serverTimestamp(),
       };
 }

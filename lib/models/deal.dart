@@ -10,6 +10,8 @@ class Deal {
   final num value; // قيمة الصفقة
   final num commission; // العمولة
   final bool viaBorrow; // تمت عبر عرض مُستعار؟
+  final String? counterpartyId; // الوسيط الآخر اللي لازم يأكّد الصفقة
+  final String? offerId; // العرض المرتبط بالصفقة (للتعليم كـ"تم")
   final String status; // verified | pending | rejected
   final DateTime? createdAt;
 
@@ -22,6 +24,8 @@ class Deal {
     required this.value,
     this.commission = 0,
     this.viaBorrow = false,
+    this.counterpartyId,
+    this.offerId,
     this.status = 'verified',
     this.createdAt,
   });
@@ -37,6 +41,8 @@ class Deal {
       value: m['value'] as num? ?? 0,
       commission: m['commission'] as num? ?? 0,
       viaBorrow: m['viaBorrow'] as bool? ?? false,
+      counterpartyId: m['counterpartyId'] as String?,
+      offerId: m['offerId'] as String?,
       status: m['status'] as String? ?? 'verified',
       createdAt: (m['createdAt'] as Timestamp?)?.toDate(),
     );
@@ -50,6 +56,8 @@ class Deal {
         'value': value,
         'commission': commission,
         'viaBorrow': viaBorrow,
+        if (counterpartyId != null) 'counterpartyId': counterpartyId,
+        if (offerId != null) 'offerId': offerId,
         'status': status,
         'createdAt': FieldValue.serverTimestamp(),
       };
