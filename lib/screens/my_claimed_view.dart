@@ -122,10 +122,10 @@ class MyClaimedView extends StatelessWidget {
       ));
 
       // علّم العرض كـ"تم": لو عرضي يتعلّم فوراً، لو عرض غيري يتعلّم لما يأكّد
-      if (ownOffer && dealOffer != null) {
+      if (ownOffer) {
         await _propertyService.setStatus(dealOffer.id, PropertyStatus.sold);
       }
-      if (pending && otherOwnerId != null) {
+      if (pending) {
         await _notifications.send(
           toUid: otherOwnerId,
           title: 'صفقة بانتظار تأكيدك',

@@ -127,6 +127,48 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
     );
   }
 
+  Widget _statusBanner(BuildContext context, Property p) {
+    final isRent = p.listingType == ListingType.rent;
+    final label = p.status == PropertyStatus.reserved
+        ? 'هذا العقار محجوز مؤقتاً'
+        : isRent
+            ? 'تم تأجير هذا العقار'
+            : 'تم بيع هذا العقار';
+    final color = p.status == PropertyStatus.reserved
+        ? const Color(0xFFC9921f)
+        : const Color(0xFFD9534F);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color),
+      ),
+      child: Row(
+        children: [
+          Icon(
+              p.status == PropertyStatus.reserved
+                  ? Icons.lock_clock
+                  : Icons.do_not_disturb_on,
+              color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(label,
+                style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15)),
+          ),
+          TextButton(
+            onPressed: () => context.go('/'),
+            child: const Text('تصفّح المتاح'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _content(BuildContext context, Property p) {
     final wide = MediaQuery.of(context).size.width > 900;
     final gallery = _gallery(p);
@@ -152,6 +194,10 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
           ],
         ),
         const SizedBox(height: 8),
+        if (p.status != PropertyStatus.available) ...[
+          _statusBanner(context, p),
+          const SizedBox(height: 12),
+        ],
         Flex(
           direction: wide ? Axis.horizontal : Axis.vertical,
           crossAxisAlignment: CrossAxisAlignment.start,

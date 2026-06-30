@@ -1,1 +1,31 @@
-{"firestore":{"rules":"firestore.rules"},"flutter":{"platforms":{"dart":{"lib/firebase_options.dart":{"projectId":"appointment-booking-be1cd","configurations":{"web":"1:598236303109:web:1dfc89eb80eb4aad1db16c"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "appointment-booking-be1cd",
+          "configurations": {
+            "web": "1:598236303109:web:1dfc89eb80eb4aad1db16c"
+          }
+        }
+      }
+    }
+  }
+}
