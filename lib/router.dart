@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'screens/admin_dashboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/properties_list_screen.dart';
 import 'screens/signup_screen.dart';
 import 'services/auth_service.dart';
+import 'services/user_service.dart';
 import 'public/about_page.dart';
 import 'public/account_page.dart';
 import 'public/advertiser_page.dart';
@@ -81,7 +83,23 @@ class _AdminGateState extends State<AdminGate> {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        if (snapshot.hasData) return const PropertiesListScreen();
+        if (snapshot.hasData) {
+          // وجّه الأدمن للوحته، وباقي المستخدمين للوحة الوسيط
+          final uid = snapshot.data!.uid;
+          return StreamBuilder<UserProfile?>(
+            stream: UserService().watch(uid),
+            builder: (context, profileSnap) {
+              if (profileSnap.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()));
+              }
+              if (profileSnap.data?.role == UserRole.admin) {
+                return AdminDashboardScreen();
+              }
+              return const PropertiesListScreen();
+            },
+          );
+        }
         return _showSignup
             ? SignupScreen(
                 onSwitchToLogin: () => setState(() => _showSignup = false))
