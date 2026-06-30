@@ -35,7 +35,8 @@ class AdvertiserPage extends StatelessWidget {
           final listings = snapshot.data!
               .where((p) =>
                   (p.advertiserName ?? '').trim() == name.trim() &&
-                  p.status == PropertyStatus.available)
+                  p.status == PropertyStatus.available &&
+                  p.visibility == OfferVisibility.public)
               .toList();
           final phone = listings.map((p) => p.advertiserPhone).firstWhere(
               (p) => (p ?? '').isNotEmpty,

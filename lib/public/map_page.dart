@@ -27,6 +27,7 @@ class MapPage extends StatelessWidget {
           final located = snapshot.data!
               .where((p) =>
                   p.status == PropertyStatus.available &&
+                  p.visibility == OfferVisibility.public &&
                   p.latitude != null &&
                   p.longitude != null)
               .toList();

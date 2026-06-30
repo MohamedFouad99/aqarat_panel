@@ -92,6 +92,7 @@ class _HomePageState extends State<HomePage> {
   List<Property> _filterAndSort(List<Property> items) {
     final filtered = items.where((p) {
       if (p.status != PropertyStatus.available) return false;
+      if (p.visibility != OfferVisibility.public) return false; // الخاص لا يظهر
       if (_listing != null && p.listingType != _listing) return false;
       if (_type != null && p.type != _type) return false;
       if (_minPrice != null && p.price < _minPrice!) return false;
@@ -226,7 +227,9 @@ class _HomePageState extends State<HomePage> {
             stream: _service.watchProperties(),
             builder: (context, snapshot) {
               final all = (snapshot.data ?? [])
-                  .where((p) => p.status == PropertyStatus.available)
+                  .where((p) =>
+                      p.status == PropertyStatus.available &&
+                      p.visibility == OfferVisibility.public)
                   .toList();
               final cities = all.map((p) => p.city).toSet()..remove('');
               final agents = all
