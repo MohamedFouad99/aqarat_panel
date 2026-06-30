@@ -4,6 +4,7 @@ import '../models/property.dart';
 import '../models/property_request.dart';
 import '../services/request_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/validators.dart';
 import 'widgets/public_page.dart';
 
 /// صفحة "اطلب عقارك" — العميل بيكتب اللي بيدوّر عليه والوسطاء يردّوا.
@@ -218,8 +219,9 @@ class _RequestPageState extends State<RequestPage> {
                       Expanded(child: _field(_name, 'اسمك', required: true)),
                       const SizedBox(width: 12),
                       Expanded(
-                          child: _field(_phone, 'رقم الموبايل',
-                              required: true, number: true)),
+                          child: _field(_phone, 'رقم الموبايل (سعودي)',
+                              number: true,
+                              validator: Validators.saudiPhone)),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -252,16 +254,18 @@ class _RequestPageState extends State<RequestPage> {
     bool required = false,
     bool number = false,
     int maxLines = 1,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: c,
       maxLines: maxLines,
       keyboardType: number ? TextInputType.number : TextInputType.text,
       decoration: InputDecoration(labelText: label),
-      validator: (v) {
-        if (required && (v == null || v.trim().isEmpty)) return 'مطلوب';
-        return null;
-      },
+      validator: validator ??
+          (v) {
+            if (required && (v == null || v.trim().isEmpty)) return 'مطلوب';
+            return null;
+          },
     );
   }
 }

@@ -229,6 +229,7 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
             .where((p) =>
                 p.id != current.id &&
                 p.status == PropertyStatus.available &&
+                p.visibility == OfferVisibility.public &&
                 (p.city == current.city || p.type == current.type))
             .take(4)
             .toList();
