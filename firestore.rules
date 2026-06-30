@@ -36,6 +36,16 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // طلبات استعارة العروض بين الوسطاء — للمسجَّلين فقط.
+    match /borrow_requests/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    // سجل الصفقات — للمسجَّلين فقط.
+    match /deals/{id} {
+      allow read, write: if request.auth != null;
+    }
+
     // ملف المستخدم (بيانات المعلن): يقرأها الجميع (لعرض ملف المعلن)،
     // ويعدّلها صاحبها فقط.
     match /users/{userId} {
