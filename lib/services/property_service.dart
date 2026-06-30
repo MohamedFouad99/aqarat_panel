@@ -55,6 +55,12 @@ class PropertyService {
     await _col.doc(property.id).update(property.toMap());
   }
 
+  /// تغيير حالة العقار فقط (متاح/محجوز/تم) — لزر "تمّت الصفقة" السريع.
+  /// تعليمه "تم" بيشيله تلقائياً من الموقع العام والمطابقات.
+  Future<void> setStatus(String id, PropertyStatus status) async {
+    await _col.doc(id).update({'status': status.name});
+  }
+
   Future<void> delete(String id) async {
     await _col.doc(id).delete();
   }

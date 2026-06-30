@@ -3,6 +3,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../matching/matching_service.dart';
+import '../models/app_notification.dart';
 import '../models/borrow_request.dart';
 import '../models/deal.dart';
 import '../models/property.dart';
@@ -21,6 +22,7 @@ class MyClaimedView extends StatelessWidget {
   final _propertyService = PropertyService();
   final _borrowService = BorrowService();
   final _dealService = DealService();
+  final _notifications = NotificationService();
   final _auth = AuthService();
   final _fmt = NumberFormat.decimalPattern('en');
 
@@ -59,19 +61,39 @@ class MyClaimedView extends StatelessWidget {
       ),
     );
     if (ok == true) {
+      // لو الصفقة تمت عبر عرض مُستعار، تروح "بانتظار تأكيد" صاحب العرض
+      final borrows = await _borrowService.acceptedForRequest(r.id);
+      final lender = borrows.isNotEmpty ? borrows.first : null;
       await _dealService.create(Deal(
         id: '',
         brokerId: uid,
         clientName: r.name,
-        offerTitle: '${r.type?.arabicLabel ?? "عقار"} - ${r.city}',
+        offerTitle: lender != null
+            ? lender.offerTitle
+            : '${r.type?.arabicLabel ?? "عقار"} - ${r.city}',
         type: r.listingType?.name ?? 'sale',
         value: num.tryParse(valueCtrl.text) ?? 0,
         commission: num.tryParse(commCtrl.text) ?? 0,
+        viaBorrow: lender != null,
+        counterpartyId: lender?.toBrokerId,
+        offerId: lender?.offerId,
+        status: lender != null ? 'pending' : 'verified',
       ));
+      if (lender != null) {
+        await _notifications.send(
+          toUid: lender.toBrokerId,
+          title: 'صفقة بانتظار تأكيدك',
+          body:
+              'سُجّلت صفقة على عرضك المُستعار "${lender.offerTitle}". أكّدها من تقاريرك.',
+          type: 'deal',
+        );
+      }
       await _requestService.close(r.id);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('تم توثيق الصفقة وإضافتها لسجلك ✅')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(lender != null
+                ? 'تم تسجيل الصفقة وأُرسلت لصاحب العرض للتأكيد ⏳'
+                : 'تم توثيق الصفقة وإضافتها لسجلك ✅')));
       }
     }
     valueCtrl.dispose();
@@ -97,6 +119,12 @@ class MyClaimedView extends StatelessWidget {
         toBrokerId: m.offer.ownerId ?? '',
         score: m.score,
       ));
+      await _notifications.send(
+        toUid: m.offer.ownerId ?? '',
+        title: 'طلب استعارة جديد',
+        body: 'وسيط يطلب استعارة عرضك "${m.offer.title}" لعميل مطابق.',
+        type: 'borrow_request',
+      );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('تم إرسال طلب الاستعارة لصاحب العرض ✅')));
@@ -124,7 +152,7 @@ class MyClaimedView extends StatelessWidget {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(24),
-              child: Text('لسه ماستلمتش أي طلب — استلم من تبويب "المطابقات"',
+              child: Text('لسه ماستلمتش أي طلب — استلم من "الفرص" أو من توصيات إعلاناتك',
                   textAlign: TextAlign.center),
             ),
           );
@@ -169,9 +197,22 @@ class MyClaimedView extends StatelessWidget {
                 const Icon(Icons.assignment_ind, color: Color(0xFF0A2540)),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(r.name.isEmpty ? 'عميل' : r.name,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(r.name.isEmpty ? 'عميل' : r.name,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
+                      ),
+                      if (r.targetBrokerId != null) ...[
+                        const SizedBox(width: 6),
+                        const Tooltip(
+                          message: 'طلب خاص موجّه إليك',
+                          child: Icon(Icons.lock, size: 16, color: Color(0xFFC9A227)),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: () => _logDeal(context, r, uid),
