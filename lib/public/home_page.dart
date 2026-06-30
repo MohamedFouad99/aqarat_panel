@@ -658,6 +658,10 @@ class _HomePageState extends State<HomePage> {
                   final items = ids
                       .map((id) => byId[id])
                       .whereType<Property>()
+                      // استبعد المُباع/المؤجَّر والمخفي
+                      .where((p) =>
+                          p.status == PropertyStatus.available &&
+                          p.visibility == OfferVisibility.public)
                       .take(4)
                       .toList();
                   if (items.isEmpty) return const SizedBox.shrink();

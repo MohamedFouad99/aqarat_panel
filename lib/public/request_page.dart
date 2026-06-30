@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../models/app_notification.dart';
 import '../models/property.dart';
 import '../models/property_request.dart';
 import '../services/request_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/saudi_cities.dart';
 import '../utils/validators.dart';
 import 'widgets/public_page.dart';
 
@@ -18,6 +21,10 @@ class RequestPage extends StatefulWidget {
 class _RequestPageState extends State<RequestPage> {
   final _formKey = GlobalKey<FormState>();
   final _service = RequestService();
+  final _notifications = NotificationService();
+
+  String? _targetBrokerId;
+  String _targetBrokerName = '';
 
   final _city = TextEditingController();
   final _district = TextEditingController();
@@ -30,8 +37,23 @@ class _RequestPageState extends State<RequestPage> {
 
   PropertyType? _type;
   ListingType _listing = ListingType.sale;
+  String? _cityValue;
+  bool _paramLoaded = false;
   bool _saving = false;
   bool _done = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_paramLoaded) return; // اقرأ البراميترز مرة واحدة بس
+    _paramLoaded = true;
+    final q = GoRouterState.of(context).uri.queryParameters;
+    final broker = q['broker'];
+    if (broker != null && broker.isNotEmpty) {
+      _targetBrokerId = broker;
+      _targetBrokerName = q['bname'] ?? '';
+    }
+  }
 
   @override
   void dispose() {
@@ -53,6 +75,7 @@ class _RequestPageState extends State<RequestPage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
+    final targeted = _targetBrokerId != null && _targetBrokerId!.isNotEmpty;
     try {
       await _service.create(PropertyRequest(
         id: '',
@@ -66,7 +89,20 @@ class _RequestPageState extends State<RequestPage> {
         notes: _notes.text.trim(),
         name: _name.text.trim(),
         phone: _phone.text.trim(),
+        // طلب موجّه لوسيط معيّن: يروح مباشرة لـ"طلباته"
+        status: targeted ? 'claimed' : 'open',
+        claimedBy: targeted ? _targetBrokerId : null,
+        targetBrokerId: targeted ? _targetBrokerId : null,
       ));
+      if (targeted) {
+        await _notifications.send(
+          toUid: _targetBrokerId!,
+          title: 'طلب خاص جديد',
+          body:
+              'وصلك طلب خاص من ${_name.text.trim().isEmpty ? "عميل" : _name.text.trim()} عبر ملفك.',
+          type: 'info',
+        );
+      }
       if (mounted) setState(() => _done = true);
     } catch (e) {
       if (mounted) {
@@ -152,6 +188,32 @@ class _RequestPageState extends State<RequestPage> {
               ],
             ),
           ),
+          if (_targetBrokerId != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.gold.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.gold),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.person_pin, color: AppColors.navy),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'طلب خاص موجّه إلى الوسيط: '
+                      '${_targetBrokerName.isEmpty ? "المحدّد" : _targetBrokerName}',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, color: AppColors.navy),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
           Card(
             child: Padding(
@@ -192,10 +254,9 @@ class _RequestPageState extends State<RequestPage> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Expanded(
-                          child: _field(_city, 'المدينة', required: true)),
+                      Expanded(child: _cityDropdown()),
                       const SizedBox(width: 12),
-                      Expanded(child: _field(_district, 'المنطقة')),
+                      Expanded(child: _districtField()),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -246,6 +307,36 @@ class _RequestPageState extends State<RequestPage> {
         ],
       ),
     );
+  }
+
+  Widget _cityDropdown() {
+    // ندعم قيمة قديمة مش في القائمة عشان مايحصلش crash
+    final items = <String>[
+      ...kSaudiCities,
+      if (_cityValue != null && !kSaudiCities.contains(_cityValue)) _cityValue!,
+    ];
+    return DropdownButtonFormField<String>(
+      initialValue: _cityValue,
+      isExpanded: true,
+      decoration: const InputDecoration(labelText: 'المدينة'),
+      items: items
+          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+          .toList(),
+      validator: (v) => (v == null || v.isEmpty) ? 'مطلوب' : null,
+      onChanged: (v) => setState(() {
+        _cityValue = v;
+        _city.text = v ?? '';
+        _district.clear(); // الأحياء تتغيّر حسب المدينة
+      }),
+    );
+  }
+
+  Widget _districtField() {
+    final options = kSaudiDistricts[_cityValue] ?? const [];
+    final hint = options.isEmpty
+        ? 'الحي/المنطقة'
+        : 'الحي (مثال: ${options.first})';
+    return _field(_district, hint);
   }
 
   Widget _field(
