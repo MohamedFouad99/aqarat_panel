@@ -23,6 +23,21 @@ class DealService {
     });
   }
 
+  /// صفقات بانتظار تأكيد الطرف الآخر (الوسيط صاحب العرض المُستعار).
+  Stream<List<Deal>> watchPendingForCounterparty(String uid) {
+    return _col
+        .where('counterpartyId', isEqualTo: uid)
+        .where('status', isEqualTo: 'pending')
+        .snapshots()
+        .map((s) => s.docs.map(Deal.fromDoc).toList());
+  }
+
+  Future<void> confirm(String id) =>
+      _col.doc(id).update({'status': 'verified'});
+
+  Future<void> reject(String id) =>
+      _col.doc(id).update({'status': 'rejected'});
+
   /// عدد الصفقات الموثّقة لوسيط (للشارة في الملف العام).
   Future<int> countByBroker(String uid) async {
     final snap = await _col

@@ -27,6 +27,16 @@ class RequestService {
   Future<void> close(String id) =>
       _col.doc(id).update({'status': 'closed'});
 
+  /// الطلبات المحجوزة (استلمها وسطاء) — لعرض التعاون من أصحاب العروض.
+  Stream<List<PropertyRequest>> watchClaimedRequests() {
+    return _col.where('status', isEqualTo: 'claimed').snapshots().map((snap) {
+      final list = snap.docs.map(PropertyRequest.fromDoc).toList()
+        ..sort((a, b) => (b.createdAt ?? DateTime(0))
+            .compareTo(a.createdAt ?? DateTime(0)));
+      return list;
+    });
+  }
+
   /// استلام الطلب (ذرّي): أول وسيط يستلم بس — الباقي ميقدروش.
   /// بترجّع true لو نجح، false لو حد سبقه.
   Future<bool> claim(String id, String uid) async {
