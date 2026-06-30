@@ -7,6 +7,7 @@ import '../models/property.dart';
 import '../services/auth_service.dart';
 import '../services/property_service.dart';
 import '../services/user_service.dart';
+import '../utils/validators.dart';
 
 class PropertyFormScreen extends StatefulWidget {
   /// لو null يبقى إضافة جديدة، غير كده تعديل.
@@ -97,6 +98,9 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
   late final TextEditingController _floor;
   late final TextEditingController _finishing;
   late Set<String> _amenities;
+  late OfferVisibility _visibility;
+  late bool _receiveRequests;
+  late bool _allowBorrow;
 
   static const _amenityOptions = [
     'مصعد',
@@ -147,6 +151,9 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
     _floor = TextEditingController(text: p?.floor?.toString() ?? '');
     _finishing = TextEditingController(text: p?.finishing ?? '');
     _amenities = {...(p?.amenities ?? const [])};
+    _visibility = p?.visibility ?? OfferVisibility.public;
+    _receiveRequests = p?.receiveRequests ?? true;
+    _allowBorrow = p?.allowBorrow ?? true;
     _images = List<String>.from(p?.images ?? const []);
   }
 
@@ -233,6 +240,9 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
         finishing:
             _finishing.text.trim().isEmpty ? null : _finishing.text.trim(),
         amenities: _amenities.toList(),
+        visibility: _visibility,
+        receiveRequests: _receiveRequests,
+        allowBorrow: _allowBorrow,
       );
 
       if (_isEdit) {
@@ -402,7 +412,8 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
                       Expanded(child: _text(_advertiserName, 'اسم المعلن')),
                       const SizedBox(width: 12),
                       Expanded(
-                          child: _text(_advertiserPhone, 'تليفون المعلن')),
+                          child: _text(_advertiserPhone, 'جوال المعلن (سعودي)',
+                              validator: Validators.saudiPhone)),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -460,6 +471,50 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
                     title: const Text('عقار مميّز'),
                     value: _featured,
                     onChanged: (v) => setState(() => _featured = v),
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  const Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text('نوع العرض وإعداداته',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 8),
+                  SegmentedButton<OfferVisibility>(
+                    segments: const [
+                      ButtonSegment(
+                          value: OfferVisibility.public,
+                          icon: Icon(Icons.public),
+                          label: Text('عام')),
+                      ButtonSegment(
+                          value: OfferVisibility.private,
+                          icon: Icon(Icons.lock_outline),
+                          label: Text('خاص (مخفي)')),
+                    ],
+                    selected: {_visibility},
+                    onSelectionChanged: (s) =>
+                        setState(() => _visibility = s.first),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _visibility == OfferVisibility.public
+                        ? 'العرض العام يظهر للجميع في السوق ويدخل المطابقة.'
+                        : 'العرض الخاص لا يظهر في السوق، لكنه يدخل المطابقة الذكية فقط.',
+                    style: const TextStyle(
+                        color: Color(0xFF6B7785), fontSize: 12),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('استقبال الطلبات والتواصل'),
+                    value: _receiveRequests,
+                    onChanged: (v) => setState(() => _receiveRequests = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('السماح باستعارة العرض من وسطاء آخرين'),
+                    value: _allowBorrow,
+                    onChanged: (v) => setState(() => _allowBorrow = v),
                   ),
                   const SizedBox(height: 12),
                   _buildImagesSection(),
@@ -554,19 +609,24 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
     bool required = false,
     bool number = false,
     int maxLines = 1,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: c,
       maxLines: maxLines,
       keyboardType: number ? TextInputType.number : TextInputType.text,
       decoration: InputDecoration(labelText: label),
-      validator: (v) {
-        if (required && (v == null || v.trim().isEmpty)) return 'مطلوب';
-        if (number && v != null && v.isNotEmpty && num.tryParse(v) == null) {
-          return 'رقم غير صحيح';
-        }
-        return null;
-      },
+      validator: validator ??
+          (v) {
+            if (required && (v == null || v.trim().isEmpty)) return 'مطلوب';
+            if (number &&
+                v != null &&
+                v.isNotEmpty &&
+                num.tryParse(v) == null) {
+              return 'رقم غير صحيح';
+            }
+            return null;
+          },
     );
   }
 }

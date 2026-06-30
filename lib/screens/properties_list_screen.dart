@@ -8,8 +8,12 @@ import '../services/auth_service.dart';
 import '../services/property_service.dart';
 import '../services/request_service.dart';
 import '../services/views_service.dart';
+import 'borrow_view.dart';
+import 'broker_profile_screen.dart';
+import 'matches_view.dart';
+import 'my_claimed_view.dart';
 import 'property_form_screen.dart';
-import 'requests_view.dart';
+import 'reports_screen.dart';
 
 class PropertiesListScreen extends StatefulWidget {
   const PropertiesListScreen({super.key});
@@ -81,7 +85,7 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: DefaultTabController(
-        length: 3,
+        length: 5,
         child: Scaffold(
           appBar: AppBar(
             title: const Text('لوحة الوسيط'),
@@ -91,6 +95,21 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
                 icon: const Icon(Icons.public, color: Colors.white, size: 18),
                 label: const Text('لوحة العميل',
                     style: TextStyle(color: Colors.white)),
+              ),
+              IconButton(
+                tooltip: 'تقاريري',
+                icon: const Icon(Icons.bar_chart),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => ReportsScreen()),
+                ),
+              ),
+              IconButton(
+                tooltip: 'ملفي',
+                icon: const Icon(Icons.account_circle_outlined),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (_) => const BrokerProfileScreen()),
+                ),
               ),
               IconButton(
                 tooltip: 'تسجيل الخروج',
@@ -109,7 +128,9 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
               unselectedLabelStyle: TextStyle(fontSize: 14),
               tabs: [
                 Tab(text: 'إعلاناتي', icon: Icon(Icons.home_work)),
-                Tab(text: 'طلبات العملاء', icon: Icon(Icons.person_search)),
+                Tab(text: 'المطابقات', icon: Icon(Icons.auto_awesome)),
+                Tab(text: 'طلباتي', icon: Icon(Icons.assignment_ind)),
+                Tab(text: 'الاستعارات', icon: Icon(Icons.swap_horiz)),
                 Tab(text: 'الباقات', icon: Icon(Icons.workspace_premium)),
               ],
             ),
@@ -122,7 +143,9 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
           body: TabBarView(
             children: [
               _myListingsTab(),
-              RequestsView(),
+              MatchesView(),
+              MyClaimedView(),
+              BorrowView(),
               _packagesTab(),
             ],
           ),
@@ -467,7 +490,8 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
         subtitle: Text(
           '${p.type.arabicLabel} · ${p.listingType.arabicLabel} · '
           '${p.city} ${p.district}\n'
-          '${_priceFormat.format(p.price)} ريال · ${p.area} م² · ${p.status.arabicLabel}',
+          '${_priceFormat.format(p.price)} ريال · ${p.area} م² · ${p.status.arabicLabel}'
+          '${p.visibility == OfferVisibility.private ? ' · 🔒 خاص' : ''}',
         ),
         isThreeLine: true,
         trailing: PopupMenuButton<String>(
