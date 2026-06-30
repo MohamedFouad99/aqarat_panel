@@ -80,6 +80,24 @@ class UserService {
       _db.collection('users').doc(uid).snapshots().map(
           (doc) => doc.exists ? UserProfile.fromDoc(doc) : null);
 
+  /// كل المستخدمين — للوحة الأدمن.
+  Stream<List<UserProfile>> watchAllUsers() => _db
+      .collection('users')
+      .snapshots()
+      .map((s) => s.docs.map(UserProfile.fromDoc).toList());
+
+  /// توثيق/إلغاء توثيق معلن (الأدمن).
+  Future<void> setVerified(String uid, bool verified) => _db
+      .collection('users')
+      .doc(uid)
+      .set({'verified': verified}, SetOptions(merge: true));
+
+  /// تغيير دور المستخدم (الأدمن).
+  Future<void> setRole(String uid, UserRole role) => _db
+      .collection('users')
+      .doc(uid)
+      .set({'role': role.name}, SetOptions(merge: true));
+
   /// كل الوسطاء — لنظام التوزيع.
   Future<List<UserProfile>> allBrokers() async {
     final snap = await _db

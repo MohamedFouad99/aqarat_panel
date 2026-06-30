@@ -38,4 +38,13 @@ class BorrowService {
       _col.doc(id).update({'status': 'accepted'});
   Future<void> reject(String id) =>
       _col.doc(id).update({'status': 'rejected'});
+
+  /// الاستعارات المقبولة لطلب معيّن (لربط الصفقة بصاحب العرض المُستعار).
+  Future<List<BorrowRequest>> acceptedForRequest(String requestId) async {
+    final snap = await _col
+        .where('requestId', isEqualTo: requestId)
+        .where('status', isEqualTo: 'accepted')
+        .get();
+    return snap.docs.map(BorrowRequest.fromDoc).toList();
+  }
 }

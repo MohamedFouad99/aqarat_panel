@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
+import '../models/app_notification.dart';
 import '../models/deal.dart';
 import '../models/property.dart';
 import '../models/property_request.dart';
@@ -19,7 +20,28 @@ class ReportsScreen extends StatelessWidget {
   final _requestService = RequestService();
   final _dealService = DealService();
   final _viewsService = ViewsService();
+  final _notifications = NotificationService();
   final _fmt = NumberFormat.decimalPattern('en');
+
+  Future<void> _respondDeal(Deal d, bool confirm) async {
+    if (confirm) {
+      await _dealService.confirm(d.id);
+      // أعلّم العرض المُستعار كـ"تم" — يختفي من الموقع والمطابقات
+      if ((d.offerId ?? '').isNotEmpty) {
+        await _propertyService.setStatus(d.offerId!, PropertyStatus.sold);
+      }
+    } else {
+      await _dealService.reject(d.id);
+    }
+    await _notifications.send(
+      toUid: d.brokerId,
+      title: confirm ? 'تم تأكيد صفقتك' : 'تم رفض الصفقة',
+      body: confirm
+          ? 'أكّد صاحب العرض الصفقة "${d.offerTitle}". أصبحت موثّقة ✅'
+          : 'اعترض صاحب العرض على الصفقة "${d.offerTitle}".',
+      type: 'deal',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +115,31 @@ class ReportsScreen extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 24),
+                            StreamBuilder<List<Deal>>(
+                              stream: _dealService
+                                  .watchPendingForCounterparty(uid),
+                              builder: (context, pendSnap) {
+                                final pending = pendSnap.data ?? [];
+                                if (pending.isEmpty) {
+                                  return const SizedBox.shrink();
+                                }
+                                return Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('صفقات بانتظار تأكيدك',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            color: Color(0xFFC9921f))),
+                                    const SizedBox(height: 8),
+                                    ...pending
+                                        .map((d) => _pendingCard(context, d)),
+                                    const SizedBox(height: 24),
+                                  ],
+                                );
+                              },
+                            ),
                             const Text('آخر الصفقات',
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
@@ -122,6 +169,49 @@ class ReportsScreen extends StatelessWidget {
               },
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _pendingCard(BuildContext context, Deal d) {
+    return Card(
+      color: const Color(0xFFFFF8E8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(d.offerTitle,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 2),
+            Text(
+                'العميل: ${d.clientName} · القيمة: ${_fmt.format(d.value)} ريال'
+                '${d.commission > 0 ? " · عمولة: ${_fmt.format(d.commission)}" : ""}',
+                style: const TextStyle(color: Color(0xFF6B7785), fontSize: 13)),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () => _respondDeal(d, true),
+                    icon: const Icon(Icons.check, size: 18),
+                    label: const Text('تأكيد'),
+                    style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E8E4E)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _respondDeal(d, false),
+                    icon: const Icon(Icons.close, size: 18),
+                    label: const Text('رفض'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
