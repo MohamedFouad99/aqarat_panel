@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../utils/saudi_cities.dart';
 import '../utils/validators.dart';
 
 /// شاشة الملف التعريفي للوسيط — البيانات + الاختصاص الجغرافي (مدينة + حتى 5 أحياء).
@@ -22,6 +23,7 @@ class _BrokerProfileScreenState extends State<BrokerProfileScreen> {
   final _city = TextEditingController();
   final _districtInput = TextEditingController();
   final List<String> _districts = [];
+  String? _cityValue;
   UserRole _role = UserRole.broker;
 
   bool _loading = true;
@@ -41,6 +43,7 @@ class _BrokerProfileScreenState extends State<BrokerProfileScreen> {
         _name.text = p.name;
         _phone.text = p.phone;
         _city.text = p.city;
+        _cityValue = p.city.isNotEmpty ? p.city : null;
         _districts.addAll(p.districts);
         _role = p.role;
       }
@@ -150,13 +153,27 @@ class _BrokerProfileScreenState extends State<BrokerProfileScreen> {
                               color: Color(0xFF6B7785), fontSize: 12),
                         ),
                         const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _city,
+                        DropdownButtonFormField<String>(
+                          initialValue: _cityValue,
+                          isExpanded: true,
                           decoration: const InputDecoration(
                               labelText: 'مدينة الاختصاص'),
-                          validator: (v) => (v == null || v.trim().isEmpty)
+                          items: <String>[
+                            ...kSaudiCities,
+                            if (_cityValue != null &&
+                                !kSaudiCities.contains(_cityValue))
+                              _cityValue!,
+                          ]
+                              .map((c) => DropdownMenuItem(
+                                  value: c, child: Text(c)))
+                              .toList(),
+                          validator: (v) => (v == null || v.isEmpty)
                               ? 'مطلوب'
                               : null,
+                          onChanged: (v) => setState(() {
+                            _cityValue = v;
+                            _city.text = v ?? '';
+                          }),
                         ),
                         const SizedBox(height: 12),
                         Row(

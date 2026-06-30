@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../models/app_notification.dart';
 import '../models/borrow_request.dart';
 import '../services/auth_service.dart';
 import '../services/borrow_service.dart';
@@ -14,7 +15,27 @@ class BorrowView extends StatelessWidget {
   final _borrow = BorrowService();
   final _auth = AuthService();
   final _users = UserService();
+  final _notifications = NotificationService();
   final _fmt = NumberFormat.decimalPattern('en');
+
+  Future<void> _respond(BorrowRequest b, bool accept) async {
+    if (accept) {
+      await _borrow.accept(b.id);
+    } else {
+      await _borrow.reject(b.id);
+    }
+    final coop = b.kind == 'cooperation';
+    await _notifications.send(
+      toUid: b.fromBrokerId,
+      title: accept
+          ? (coop ? 'تم قبول عرض التعاون' : 'تم قبول طلب الاستعارة')
+          : (coop ? 'تم رفض عرض التعاون' : 'تم رفض طلب الاستعارة'),
+      body: accept
+          ? 'تمت الموافقة على التعاون بخصوص "${b.offerTitle}".'
+          : 'تم الاعتذار عن التعاون بخصوص "${b.offerTitle}".',
+      type: accept ? 'borrow_accepted' : 'borrow_rejected',
+    );
+  }
 
   Future<void> _open(String url) async {
     final uri = Uri.tryParse(url);
@@ -33,15 +54,27 @@ class BorrowView extends StatelessWidget {
           _header('طلبات واردة على عروضك', Icons.call_received),
           StreamBuilder<List<BorrowRequest>>(
             stream: _borrow.watchIncoming(uid),
-            builder: (_, snap) => _list(
-                context, snap.data ?? [], incoming: true),
+            builder: (_, snap) {
+              if (!snap.hasData) {
+                return const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(child: CircularProgressIndicator()));
+              }
+              return _list(context, snap.data!, incoming: true);
+            },
           ),
           const SizedBox(height: 20),
           _header('طلباتك للاستعارة', Icons.call_made),
           StreamBuilder<List<BorrowRequest>>(
             stream: _borrow.watchOutgoing(uid),
-            builder: (_, snap) =>
-                _list(context, snap.data ?? [], incoming: false),
+            builder: (_, snap) {
+              if (!snap.hasData) {
+                return const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(child: CircularProgressIndicator()));
+              }
+              return _list(context, snap.data!, incoming: false);
+            },
           ),
         ],
       ),
@@ -79,7 +112,7 @@ class BorrowView extends StatelessWidget {
       'pending': '⏳ بانتظار الرد',
       'accepted': '✅ مقبول',
       'rejected': '❌ مرفوض',
-    }[b.status]!;
+    }[b.status] ?? b.status;
     // عند القبول نكشف بيانات الطرف الآخر
     final otherUid = incoming ? b.fromBrokerId : b.toBrokerId;
 
@@ -111,6 +144,26 @@ class BorrowView extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(
+                    b.kind == 'cooperation'
+                        ? Icons.handshake
+                        : Icons.swap_horiz,
+                    size: 14,
+                    color: const Color(0xFFC9921f)),
+                const SizedBox(width: 4),
+                Text(
+                    b.kind == 'cooperation'
+                        ? (incoming ? 'عرض تعاون وارد' : 'عرض تعاون أرسلته')
+                        : (incoming ? 'طلب استعارة وارد' : 'طلب استعارة أرسلته'),
+                    style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFFC9921f),
+                        fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 4),
             Text('لعميل: ${b.requestName.isEmpty ? "—" : b.requestName}',
                 style: const TextStyle(color: Color(0xFF6B7785))),
             const SizedBox(height: 6),
@@ -122,14 +175,14 @@ class BorrowView extends StatelessWidget {
                 children: [
                   Expanded(
                     child: FilledButton(
-                      onPressed: () => _borrow.accept(b.id),
+                      onPressed: () => _respond(b, true),
                       child: const Text('قبول'),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => _borrow.reject(b.id),
+                      onPressed: () => _respond(b, false),
                       child: const Text('رفض'),
                     ),
                   ),
