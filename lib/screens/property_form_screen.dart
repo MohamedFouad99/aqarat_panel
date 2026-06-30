@@ -7,6 +7,7 @@ import '../models/property.dart';
 import '../services/auth_service.dart';
 import '../services/property_service.dart';
 import '../services/user_service.dart';
+import '../utils/saudi_cities.dart';
 import '../utils/validators.dart';
 
 class PropertyFormScreen extends StatefulWidget {
@@ -40,6 +41,7 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
   late final TextEditingController _latitude;
   late final TextEditingController _longitude;
   late final TextEditingController _mapsLink;
+  String? _cityValue;
 
   Future<void> _prefillFromProfile() async {
     final uid = _auth.currentUser?.uid;
@@ -134,6 +136,7 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
     _bathrooms = TextEditingController(text: p?.bathrooms.toString() ?? '0');
     _city = TextEditingController(text: p?.city ?? '');
     _district = TextEditingController(text: p?.district ?? '');
+    _cityValue = (p?.city ?? '').isNotEmpty ? p!.city : null;
     _description = TextEditingController(text: p?.description ?? '');
     _advertiserName = TextEditingController(text: p?.advertiserName ?? '');
     _advertiserPhone = TextEditingController(text: p?.advertiserPhone ?? '');
@@ -337,7 +340,7 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Expanded(child: _text(_city, 'المدينة', required: true)),
+                      Expanded(child: _cityDropdown()),
                       const SizedBox(width: 12),
                       Expanded(
                           child: _text(_district, 'المنطقة', required: true)),
@@ -600,6 +603,28 @@ class _PropertyFormScreenState extends State<PropertyFormScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _cityDropdown() {
+    // ندعم قيمة قديمة مش في القائمة (إعلانات سابقة)
+    final items = <String>[
+      ...kSaudiCities,
+      if (_cityValue != null && !kSaudiCities.contains(_cityValue))
+        _cityValue!,
+    ];
+    return DropdownButtonFormField<String>(
+      initialValue: _cityValue,
+      isExpanded: true,
+      decoration: const InputDecoration(labelText: 'المدينة'),
+      items: items
+          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+          .toList(),
+      validator: (v) => (v == null || v.isEmpty) ? 'مطلوب' : null,
+      onChanged: (v) => setState(() {
+        _cityValue = v;
+        _city.text = v ?? '';
+      }),
     );
   }
 

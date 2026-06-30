@@ -26,74 +26,121 @@ class MyClaimedView extends StatelessWidget {
   final _auth = AuthService();
   final _fmt = NumberFormat.decimalPattern('en');
 
-  Future<void> _logDeal(
-      BuildContext context, PropertyRequest r, String uid) async {
+  Future<void> _logDeal(BuildContext context, PropertyRequest r, String uid,
+      List<MatchResult> recos) async {
     final valueCtrl = TextEditingController();
     final commCtrl = TextEditingController();
+    Property? selectedOffer;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('توثيق صفقة'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: valueCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'قيمة الصفقة (ريال)'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: commCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'العمولة (اختياري)'),
-            ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('توثيق صفقة'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (recos.isNotEmpty) ...[
+                DropdownButtonFormField<Property?>(
+                  initialValue: selectedOffer,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                      labelText: 'العرض اللي تمّت عليه الصفقة'),
+                  items: [
+                    const DropdownMenuItem<Property?>(
+                        value: null, child: Text('— بدون تحديد —')),
+                    ...recos.map((m) => DropdownMenuItem<Property?>(
+                          value: m.offer,
+                          child: Text(
+                            '${m.offer.title} '
+                            '${m.offer.ownerId == uid ? "(عرضك)" : "(وسيط آخر)"}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        )),
+                  ],
+                  onChanged: (v) => setLocal(() => selectedOffer = v),
+                ),
+                const SizedBox(height: 10),
+              ],
+              TextField(
+                controller: valueCtrl,
+                keyboardType: TextInputType.number,
+                decoration:
+                    const InputDecoration(labelText: 'قيمة الصفقة (ريال)'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: commCtrl,
+                keyboardType: TextInputType.number,
+                decoration:
+                    const InputDecoration(labelText: 'العمولة (اختياري)'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('إلغاء')),
+            FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('توثيق')),
           ],
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('إلغاء')),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('توثيق')),
-        ],
       ),
     );
     if (ok == true) {
-      // لو الصفقة تمت عبر عرض مُستعار، تروح "بانتظار تأكيد" صاحب العرض
-      final borrows = await _borrowService.acceptedForRequest(r.id);
-      final lender = borrows.isNotEmpty ? borrows.first : null;
+      final dealOffer = selectedOffer;
+      // لو ماحددش عرض، نحاول نلاقي استعارة مقبولة لنفس الطلب
+      BorrowRequest? lender;
+      if (dealOffer == null) {
+        final borrows = await _borrowService.acceptedForRequest(r.id);
+        lender = borrows.isNotEmpty ? borrows.first : null;
+      }
+      final ownOffer = dealOffer != null && dealOffer.ownerId == uid;
+      // صفقة على عرض وسيط تاني → تحتاج تأكيده
+      final otherOwnerId = (dealOffer != null && !ownOffer)
+          ? dealOffer.ownerId
+          : lender?.toBrokerId;
+      final pending = otherOwnerId != null && otherOwnerId.isNotEmpty;
+      final offerId = dealOffer?.id ?? lender?.offerId;
+      final offerTitle = dealOffer?.title ??
+          (lender != null
+              ? lender.offerTitle
+              : '${r.type?.arabicLabel ?? "عقار"} - ${r.city}');
+
       await _dealService.create(Deal(
         id: '',
         brokerId: uid,
         clientName: r.name,
-        offerTitle: lender != null
-            ? lender.offerTitle
-            : '${r.type?.arabicLabel ?? "عقار"} - ${r.city}',
+        offerTitle: offerTitle,
         type: r.listingType?.name ?? 'sale',
         value: num.tryParse(valueCtrl.text) ?? 0,
         commission: num.tryParse(commCtrl.text) ?? 0,
-        viaBorrow: lender != null,
-        counterpartyId: lender?.toBrokerId,
-        offerId: lender?.offerId,
-        status: lender != null ? 'pending' : 'verified',
+        viaBorrow: pending,
+        counterpartyId: pending ? otherOwnerId : null,
+        offerId: offerId,
+        status: pending ? 'pending' : 'verified',
       ));
-      if (lender != null) {
+
+      // علّم العرض كـ"تم": لو عرضي يتعلّم فوراً، لو عرض غيري يتعلّم لما يأكّد
+      if (ownOffer && dealOffer != null) {
+        await _propertyService.setStatus(dealOffer.id, PropertyStatus.sold);
+      }
+      if (pending && otherOwnerId != null) {
         await _notifications.send(
-          toUid: lender.toBrokerId,
+          toUid: otherOwnerId,
           title: 'صفقة بانتظار تأكيدك',
-          body:
-              'سُجّلت صفقة على عرضك المُستعار "${lender.offerTitle}". أكّدها من تقاريرك.',
+          body: 'سُجّلت صفقة على عرضك "$offerTitle". أكّدها من تقاريرك.',
           type: 'deal',
         );
       }
       await _requestService.close(r.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(lender != null
+            content: Text(pending
                 ? 'تم تسجيل الصفقة وأُرسلت لصاحب العرض للتأكيد ⏳'
-                : 'تم توثيق الصفقة وإضافتها لسجلك ✅')));
+                : ownOffer
+                    ? 'تم توثيق الصفقة وتعليم عرضك كمُنجَز ✅'
+                    : 'تم توثيق الصفقة وإضافتها لسجلك ✅')));
       }
     }
     valueCtrl.dispose();
@@ -215,7 +262,7 @@ class MyClaimedView extends StatelessWidget {
                   ),
                 ),
                 TextButton.icon(
-                  onPressed: () => _logDeal(context, r, uid),
+                  onPressed: () => _logDeal(context, r, uid, recos),
                   icon: const Icon(Icons.verified, size: 16),
                   label: const Text('توثيق صفقة'),
                 ),

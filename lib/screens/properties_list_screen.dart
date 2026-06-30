@@ -8,10 +8,13 @@ import '../services/auth_service.dart';
 import '../services/property_service.dart';
 import '../services/request_service.dart';
 import '../services/views_service.dart';
+import '../models/app_notification.dart';
 import 'borrow_view.dart';
+import 'broker_notifications_screen.dart';
 import 'broker_profile_screen.dart';
-import 'matches_view.dart';
 import 'my_claimed_view.dart';
+import 'offer_recommendations_screen.dart';
+import 'opportunities_view.dart';
 import 'property_form_screen.dart';
 import 'reports_screen.dart';
 
@@ -27,6 +30,7 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
   final _auth = AuthService();
   final _viewsService = ViewsService();
   final _requestService = RequestService();
+  final _notifications = NotificationService();
   final _priceFormat = NumberFormat.decimalPattern('ar');
 
   String _search = '';
@@ -80,6 +84,18 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
     }
   }
 
+  Future<void> _setStatus(Property p, PropertyStatus status) async {
+    await _service.setStatus(p.id, status);
+    if (!mounted) return;
+    final msg = status == PropertyStatus.sold
+        ? 'تم تعليم "${p.title}" كمُنجَز — اختفى من الموقع والمطابقات ✅'
+        : status == PropertyStatus.reserved
+            ? 'تم حجز "${p.title}" مؤقتاً ⏸️'
+            : 'تمت إعادة تنشيط "${p.title}" 🔄';
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -95,6 +111,26 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
                 icon: const Icon(Icons.public, color: Colors.white, size: 18),
                 label: const Text('لوحة العميل',
                     style: TextStyle(color: Colors.white)),
+              ),
+              StreamBuilder<List<AppNotification>>(
+                stream:
+                    _notifications.watchFor(_auth.currentUser?.uid ?? ''),
+                builder: (_, snap) {
+                  final unread =
+                      (snap.data ?? []).where((n) => !n.read).length;
+                  return IconButton(
+                    tooltip: 'الإشعارات',
+                    icon: Badge(
+                      isLabelVisible: unread > 0,
+                      label: Text('$unread'),
+                      child: const Icon(Icons.notifications_none),
+                    ),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (_) => BrokerNotificationsScreen()),
+                    ),
+                  );
+                },
               ),
               IconButton(
                 tooltip: 'تقاريري',
@@ -128,7 +164,7 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
               unselectedLabelStyle: TextStyle(fontSize: 14),
               tabs: [
                 Tab(text: 'إعلاناتي', icon: Icon(Icons.home_work)),
-                Tab(text: 'المطابقات', icon: Icon(Icons.auto_awesome)),
+                Tab(text: 'الفرص', icon: Icon(Icons.travel_explore)),
                 Tab(text: 'طلباتي', icon: Icon(Icons.assignment_ind)),
                 Tab(text: 'الاستعارات', icon: Icon(Icons.swap_horiz)),
                 Tab(text: 'الباقات', icon: Icon(Icons.workspace_premium)),
@@ -143,7 +179,7 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
           body: TabBarView(
             children: [
               _myListingsTab(),
-              MatchesView(),
+              OpportunitiesView(),
               MyClaimedView(),
               BorrowView(),
               _packagesTab(),
@@ -498,13 +534,27 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
           onSelected: (v) {
             if (v == 'edit') _openForm(p);
             if (v == 'delete') _confirmDelete(p);
+            if (v == 'sold') _setStatus(p, PropertyStatus.sold);
+            if (v == 'reserved') _setStatus(p, PropertyStatus.reserved);
+            if (v == 'available') _setStatus(p, PropertyStatus.available);
           },
-          itemBuilder: (_) => const [
-            PopupMenuItem(value: 'edit', child: Text('تعديل')),
-            PopupMenuItem(value: 'delete', child: Text('حذف')),
+          itemBuilder: (_) => [
+            if (p.status != PropertyStatus.sold)
+              const PopupMenuItem(
+                  value: 'sold',
+                  child: Text('✅ تمّت الصفقة (بيع/إيجار)')),
+            if (p.status == PropertyStatus.available)
+              const PopupMenuItem(
+                  value: 'reserved', child: Text('⏸️ حجز مؤقت')),
+            if (p.status != PropertyStatus.available)
+              const PopupMenuItem(
+                  value: 'available', child: Text('🔄 إعادة تنشيط')),
+            const PopupMenuItem(value: 'edit', child: Text('تعديل')),
+            const PopupMenuItem(value: 'delete', child: Text('حذف')),
           ],
         ),
-        onTap: () => _openForm(p),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => OfferRecommendationsScreen(offer: p))),
       ),
     );
   }
