@@ -16,7 +16,8 @@ class PropertyRequest {
   final String notes;
   final String name;
   final String phone;
-  final String status; // open | closed
+  final String status; // open | claimed | closed
+  final String? claimedBy; // uid الوسيط اللي استلم الطلب
   final DateTime? createdAt;
 
   PropertyRequest({
@@ -32,6 +33,7 @@ class PropertyRequest {
     required this.name,
     required this.phone,
     this.status = 'open',
+    this.claimedBy,
     this.createdAt,
   });
 
@@ -52,6 +54,7 @@ class PropertyRequest {
       name: m['name'] as String? ?? '',
       phone: m['phone'] as String? ?? '',
       status: m['status'] as String? ?? 'open',
+      claimedBy: m['claimedBy'] as String?,
       createdAt: (m['createdAt'] as Timestamp?)?.toDate(),
     );
   }

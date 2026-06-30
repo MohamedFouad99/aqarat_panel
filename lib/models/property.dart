@@ -74,7 +74,18 @@ enum PropertyStatus {
   }
 }
 
-/// نموذج العقار — هو الأساس اللي بيشترك فيه الـ Web Panel والـ WhatsApp Bot
+/// رؤية العرض: عام (يظهر في السوق) أو خاص/مخفي (يدخل المطابقة فقط).
+enum OfferVisibility {
+  public, // عام
+  private; // خاص (مخفي)
+
+  String get arabicLabel => this == OfferVisibility.public ? 'عام' : 'خاص (مخفي)';
+
+  static OfferVisibility fromString(String? value) =>
+      value == 'private' ? OfferVisibility.private : OfferVisibility.public;
+}
+
+/// نموذج العقار/العرض — الأساس اللي بيشترك فيه الموقع والمطابقة والبوت
 class Property {
   final String id;
   final String title;
@@ -104,6 +115,10 @@ class Property {
   final int? floor; // الدور
   final String? finishing; // التشطيب (سوبر لوكس...)
   final List<String> amenities; // مميزات (مصعد، جراج، حديقة...)
+  // إعدادات العرض (نظام المطابقة)
+  final OfferVisibility visibility; // عام / خاص (مخفي)
+  final bool receiveRequests; // استقبال الطلبات والتواصل
+  final bool allowBorrow; // السماح باستعارة العرض من وسطاء آخرين
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -132,6 +147,9 @@ class Property {
     this.floor,
     this.finishing,
     this.amenities = const [],
+    this.visibility = OfferVisibility.public,
+    this.receiveRequests = true,
+    this.allowBorrow = true,
     this.createdAt,
     this.updatedAt,
   });
@@ -163,6 +181,9 @@ class Property {
       floor: (map['floor'] as num?)?.toInt(),
       finishing: map['finishing'] as String?,
       amenities: (map['amenities'] as List<dynamic>?)?.cast<String>() ?? const [],
+      visibility: OfferVisibility.fromString(map['visibility'] as String?),
+      receiveRequests: map['receiveRequests'] as bool? ?? true,
+      allowBorrow: map['allowBorrow'] as bool? ?? true,
       createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -199,6 +220,9 @@ class Property {
       'floor': floor,
       'finishing': finishing,
       'amenities': amenities,
+      'visibility': visibility.name,
+      'receiveRequests': receiveRequests,
+      'allowBorrow': allowBorrow,
       if (isNew) 'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -228,6 +252,9 @@ class Property {
     int? floor,
     String? finishing,
     List<String>? amenities,
+    OfferVisibility? visibility,
+    bool? receiveRequests,
+    bool? allowBorrow,
   }) {
     return Property(
       id: id,
@@ -254,6 +281,9 @@ class Property {
       floor: floor ?? this.floor,
       finishing: finishing ?? this.finishing,
       amenities: amenities ?? this.amenities,
+      visibility: visibility ?? this.visibility,
+      receiveRequests: receiveRequests ?? this.receiveRequests,
+      allowBorrow: allowBorrow ?? this.allowBorrow,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
