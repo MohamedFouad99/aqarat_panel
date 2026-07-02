@@ -51,7 +51,19 @@ class SiteHeader extends StatelessWidget implements PreferredSizeWidget {
                   _navItem(context, 'الخريطة', '/map', location),
                   _navItem(context, 'اطلب عقارك', '/request', location),
                   _navItem(context, 'حسابي', '/account', location),
-                ],
+                ] else
+                  PopupMenuButton<String>(
+                    tooltip: 'القائمة',
+                    icon: const Icon(Icons.menu, color: Colors.white),
+                    onSelected: (path) => context.go(path),
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(value: '/', child: Text('الرئيسية')),
+                      PopupMenuItem(value: '/map', child: Text('الخريطة')),
+                      PopupMenuItem(
+                          value: '/request', child: Text('اطلب عقارك')),
+                      PopupMenuItem(value: '/account', child: Text('حسابي')),
+                    ],
+                  ),
                 ValueListenableBuilder<List<String>>(
                   valueListenable: CompareService.instance.ids,
                   builder: (context, ids, _) => IconButton(
@@ -70,23 +82,33 @@ class SiteHeader extends StatelessWidget implements PreferredSizeWidget {
                   onPressed: () => context.go('/favorites'),
                   icon: const Icon(Icons.favorite_border, color: Colors.white),
                 ),
-                IconButton(
-                  tooltip: 'الإشعارات',
-                  onPressed: () => context.go('/notifications'),
-                  icon: const Icon(Icons.notifications_none, color: Colors.white),
-                ),
-                const SizedBox(width: 8),
-                FilledButton.icon(
-                  onPressed: () => context.go('/admin'),
-                  icon: const Icon(Icons.dashboard_outlined, size: 18),
-                  label: const Text('لوحة الوسيط'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.gold,
-                    foregroundColor: AppColors.navy,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                if (wide)
+                  IconButton(
+                    tooltip: 'الإشعارات',
+                    onPressed: () => context.go('/notifications'),
+                    icon: const Icon(Icons.notifications_none,
+                        color: Colors.white),
                   ),
-                ),
+                SizedBox(width: wide ? 8 : 2),
+                if (wide)
+                  FilledButton.icon(
+                    onPressed: () => context.go('/admin'),
+                    icon: const Icon(Icons.dashboard_outlined, size: 18),
+                    label: const Text('لوحة الوسيط'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.gold,
+                      foregroundColor: AppColors.navy,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                    ),
+                  )
+                else
+                  IconButton(
+                    tooltip: 'لوحة الوسيط',
+                    onPressed: () => context.go('/admin'),
+                    icon: const Icon(Icons.dashboard_outlined,
+                        color: AppColors.gold),
+                  ),
               ],
             ),
           ),

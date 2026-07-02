@@ -267,7 +267,7 @@ class OfferRecommendationsScreen extends StatelessWidget {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: Color(0xFFC9A227)),
+        side: const BorderSide(color: Color(0xFFE7B93E)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -280,7 +280,7 @@ class OfferRecommendationsScreen extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                      color: const Color(0xFFC9A227),
+                      color: const Color(0xFFE7B93E),
                       borderRadius: BorderRadius.circular(6)),
                   child: Text('$pct%',
                       style: const TextStyle(
@@ -306,7 +306,7 @@ class OfferRecommendationsScreen extends StatelessWidget {
                 icon: const Icon(Icons.handshake, size: 18),
                 label: const Text('اعرض تعاون'),
                 style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFC9A227),
+                    backgroundColor: const Color(0xFFE7B93E),
                     foregroundColor: const Color(0xFF0A2540)),
               ),
             ),
@@ -377,8 +377,8 @@ class OfferRecommendationsScreen extends StatelessWidget {
                 icon: const Icon(Icons.assignment_turned_in, size: 18),
                 label: const Text('استلام الطلب'),
                 style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF0A2540),
-                    foregroundColor: Colors.white),
+                    backgroundColor: const Color(0xFFE7B93E),
+                    foregroundColor: const Color(0xFF0A2540)),
               ),
             ),
             const SizedBox(height: 8),

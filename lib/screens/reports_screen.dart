@@ -228,7 +228,7 @@ class ReportsScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: const Color(0xFFC9A227), size: 26),
+          Icon(icon, color: const Color(0xFFE7B93E), size: 26),
           const SizedBox(height: 8),
           FittedBox(
             child: Text(value,

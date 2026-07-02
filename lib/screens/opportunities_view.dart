@@ -126,7 +126,7 @@ class OpportunitiesView extends StatelessWidget {
       shape: specialty
           ? RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: Color(0xFFC9A227), width: 1.5))
+              side: const BorderSide(color: Color(0xFFE7B93E), width: 1.5))
           : null,
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -143,7 +143,7 @@ class OpportunitiesView extends StatelessWidget {
                           fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
                 if (specialty)
-                  const Icon(Icons.star, color: Color(0xFFC9A227), size: 18),
+                  const Icon(Icons.star, color: Color(0xFFE7B93E), size: 18),
               ],
             ),
             const SizedBox(height: 4),
@@ -162,8 +162,8 @@ class OpportunitiesView extends StatelessWidget {
                 icon: const Icon(Icons.assignment_turned_in, size: 18),
                 label: const Text('استلام الفرصة'),
                 style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF0A2540),
-                    foregroundColor: Colors.white),
+                    backgroundColor: const Color(0xFFE7B93E),
+                    foregroundColor: const Color(0xFF0A2540)),
               ),
             ),
             const SizedBox(height: 8),

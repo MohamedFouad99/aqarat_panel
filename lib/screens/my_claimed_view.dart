@@ -255,7 +255,7 @@ class MyClaimedView extends StatelessWidget {
                         const SizedBox(width: 6),
                         const Tooltip(
                           message: 'طلب خاص موجّه إليك',
-                          child: Icon(Icons.lock, size: 16, color: Color(0xFFC9A227)),
+                          child: Icon(Icons.lock, size: 16, color: Color(0xFFE7B93E)),
                         ),
                       ],
                     ],

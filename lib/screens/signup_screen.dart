@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../theme/app_theme.dart';
 import '../utils/validators.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -62,24 +63,43 @@ class _SignupScreenState extends State<SignupScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.person_add_alt_1, size: 52),
-                        const SizedBox(height: 8),
-                        Text('تسجيل معلن جديد',
-                            style: Theme.of(context).textTheme.titleLarge),
-                        const SizedBox(height: 24),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.navy, AppColors.navyLight],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+            ),
+          ),
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircleAvatar(
+                            radius: 30,
+                            backgroundColor: AppColors.navy,
+                            child: Icon(Icons.person_add_alt_1,
+                                size: 32, color: AppColors.gold),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text('تسجيل معلن جديد',
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.navy)),
+                          const SizedBox(height: 4),
+                          const Text('أنشئ حسابك وابدأ نشر إعلاناتك',
+                              style: TextStyle(color: AppColors.textMuted)),
+                          const SizedBox(height: 24),
                         TextFormField(
                           controller: _name,
                           decoration: const InputDecoration(
@@ -139,17 +159,13 @@ class _SignupScreenState extends State<SignupScreen> {
                           width: double.infinity,
                           child: FilledButton(
                             onPressed: _loading ? null : _submit,
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 12),
-                              child: _loading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2))
-                                  : const Text('إنشاء الحساب'),
-                            ),
+                            child: _loading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2))
+                                : const Text('إنشاء الحساب'),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -166,6 +182,7 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         ),
       ),
+        ),
     );
   }
 }

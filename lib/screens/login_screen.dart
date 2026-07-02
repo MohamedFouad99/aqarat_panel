@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
+import '../theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, this.onSwitchToSignup});
@@ -48,26 +49,43 @@ class _LoginScreenState extends State<LoginScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.apartment, size: 56),
-                        const SizedBox(height: 8),
-                        Text(
-                          'لوحة تحكم العقارات',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 24),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.navy, AppColors.navyLight],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+            ),
+          ),
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircleAvatar(
+                            radius: 32,
+                            backgroundColor: AppColors.navy,
+                            child: Icon(Icons.apartment,
+                                size: 34, color: AppColors.gold),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text('لوحة تحكم العقارات',
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.navy)),
+                          const SizedBox(height: 4),
+                          const Text('سجّل الدخول للمتابعة',
+                              style: TextStyle(color: AppColors.textMuted)),
+                          const SizedBox(height: 24),
                         TextFormField(
                           controller: _emailCtrl,
                           keyboardType: TextInputType.emailAddress,
@@ -106,17 +124,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: double.infinity,
                           child: FilledButton(
                             onPressed: _loading ? null : _submit,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              child: _loading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2),
-                                    )
-                                  : const Text('تسجيل الدخول'),
-                            ),
+                            child: _loading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
+                                  )
+                                : const Text('تسجيل الدخول'),
                           ),
                         ),
                         if (widget.onSwitchToSignup != null) ...[
@@ -135,6 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+        ),
     );
   }
 }

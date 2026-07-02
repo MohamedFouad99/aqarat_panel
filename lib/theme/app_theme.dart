@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// ألوان الموقع — أزرق كحلي + ذهبي (ستايل عقاري راقي).
+/// ألوان الموقع — أزرق كحلي + ذهبي لامع فاتح (ستايل عقاري فخم راقي).
 class AppColors {
   static const navy = Color(0xFF0A2540);
   static const navyLight = Color(0xFF15406B);
-  static const gold = Color(0xFFC9A227);
-  static const goldLight = Color(0xFFE3C766);
+  // لون الأكسنت: ذهبي لامع فاتح (أنقى من الذهبي الغامق القديم).
+  static const gold = Color(0xFFE7B93E);
+  static const goldLight = Color(0xFFF3D06E);
+  static const accent = gold;
+  static const accentLight = goldLight;
   static const bg = Color(0xFFF4F6FA);
   static const surface = Colors.white;
   static const text = Color(0xFF1F2933);
@@ -38,7 +41,9 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: AppColors.surface,
-        elevation: 0,
+        elevation: 3,
+        shadowColor: AppColors.navy.withValues(alpha: 0.06),
+        surfaceTintColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: AppColors.border),
@@ -49,7 +54,8 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.gold,
           foregroundColor: AppColors.navy,
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          minimumSize: const Size(0, 46),
           textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),

@@ -68,7 +68,7 @@ class BrokerNotificationsScreen extends StatelessWidget {
                           width: 10,
                           height: 10,
                           decoration: const BoxDecoration(
-                              color: Color(0xFFC9A227),
+                              color: Color(0xFFE7B93E),
                               shape: BoxShape.circle)),
                   onTap: () => _service.markRead(n.id),
                 );

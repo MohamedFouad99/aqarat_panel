@@ -156,9 +156,9 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
             bottom: const TabBar(
               isScrollable: true,
               tabAlignment: TabAlignment.center,
-              indicatorColor: Color(0xFFC9A227),
+              indicatorColor: Color(0xFFE7B93E),
               indicatorWeight: 3,
-              labelColor: Color(0xFFE3C766),
+              labelColor: Color(0xFFF3D06E),
               unselectedLabelColor: Colors.white,
               labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               unselectedLabelStyle: TextStyle(fontSize: 14),
@@ -264,7 +264,7 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
         ),
         child: Column(
           children: [
-            Icon(icon, color: const Color(0xFFC9A227), size: 22),
+            Icon(icon, color: const Color(0xFFE7B93E), size: 22),
             const SizedBox(height: 6),
             Text(value,
                 style: const TextStyle(
@@ -362,7 +362,7 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: highlighted
-              ? const Color(0xFFC9A227)
+              ? const Color(0xFFE7B93E)
               : const Color(0xFFE3E8EF),
           width: highlighted ? 2.5 : 1,
         ),
@@ -377,7 +377,7 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                  color: const Color(0xFFC9A227),
+                  color: const Color(0xFFE7B93E),
                   borderRadius: BorderRadius.circular(20)),
               child: const Text('الأكثر شيوعًا',
                   style: TextStyle(
@@ -429,11 +429,6 @@ class _PropertiesListScreenState extends State<PropertiesListScreen> {
                     content:
                         Text('لتفعيل الباقة تواصل مع الإدارة عبر واتساب 🙏')));
               },
-              style: highlighted
-                  ? null
-                  : FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF0A2540),
-                      foregroundColor: Colors.white),
               child: Text(p.$2 == '0' ? 'باقتك الحالية' : 'اشترك الآن'),
             ),
           ),

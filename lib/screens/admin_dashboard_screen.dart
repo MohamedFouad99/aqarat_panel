@@ -52,8 +52,8 @@ class AdminDashboardScreen extends StatelessWidget {
               ),
             ],
             bottom: const TabBar(
-              indicatorColor: Color(0xFFC9A227),
-              labelColor: Color(0xFFE3C766),
+              indicatorColor: Color(0xFFE7B93E),
+              labelColor: Color(0xFFF3D06E),
               unselectedLabelColor: Colors.white,
               tabs: [
                 Tab(text: 'المستخدمون', icon: Icon(Icons.people)),
@@ -112,7 +112,7 @@ class AdminDashboardScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(icon, color: const Color(0xFFC9A227), size: 24),
+            Icon(icon, color: const Color(0xFFE7B93E), size: 24),
             const SizedBox(height: 6),
             Text(value,
                 style: const TextStyle(

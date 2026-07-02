@@ -155,11 +155,6 @@ class PackagesPage extends StatelessWidget {
             width: double.infinity,
             child: FilledButton(
               onPressed: () => context.go('/admin'),
-              style: p.highlighted
-                  ? null
-                  : FilledButton.styleFrom(
-                      backgroundColor: AppColors.navy,
-                      foregroundColor: Colors.white),
               child: const Text('اشترك الآن'),
             ),
           ),

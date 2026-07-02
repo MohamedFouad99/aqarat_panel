@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../models/property.dart';
+import '../models/property_request.dart';
 import '../services/property_service.dart';
 import '../services/recently_viewed_service.dart';
+import '../services/request_service.dart';
 import '../services/views_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/format.dart';
 import 'widgets/property_grid.dart';
 import 'widgets/public_page.dart';
 
@@ -27,9 +30,12 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final _service = PropertyService();
+  final _requestService = RequestService();
   final _viewsService = ViewsService();
   late final TextEditingController _q;
 
+  // وضع السوق: requests | sale | rent
+  String _mode = 'sale';
   ListingType? _listing;
   PropertyType? _type;
   double? _minPrice;
@@ -42,10 +48,21 @@ class _HomePageState extends State<HomePage> {
   bool _showDetailed = false;
   Map<String, int> _views = {};
 
+  void _setMode(String m) {
+    setState(() {
+      _mode = m;
+      _listing = m == 'sale'
+          ? ListingType.sale
+          : m == 'rent'
+              ? ListingType.rent
+              : null;
+      if (m == 'requests') _showDetailed = false;
+    });
+  }
+
   void _clearFilters() {
     setState(() {
       _q.clear();
-      _listing = null;
       _type = null;
       _minPrice = null;
       _maxPrice = null;
@@ -59,7 +76,6 @@ class _HomePageState extends State<HomePage> {
 
   bool get _hasFilters =>
       _q.text.isNotEmpty ||
-      _listing != null ||
       _type != null ||
       _minPrice != null ||
       _maxPrice != null ||
@@ -73,7 +89,9 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _q = TextEditingController(text: widget.initialQuery ?? '');
     if (widget.initialListing != null) {
-      _listing = ListingType.fromString(widget.initialListing);
+      final l = ListingType.fromString(widget.initialListing);
+      _listing = l;
+      _mode = l == ListingType.rent ? 'rent' : 'sale';
     }
     if (widget.initialType != null) {
       _type = PropertyType.fromString(widget.initialType);
@@ -125,6 +143,18 @@ class _HomePageState extends State<HomePage> {
     return filtered;
   }
 
+  List<PropertyRequest> _filterRequests(List<PropertyRequest> items) {
+    final q = _q.text.trim().toLowerCase();
+    return items.where((r) {
+      if (_type != null && r.type != null && r.type != _type) return false;
+      if (q.isNotEmpty) {
+        final hay = '${r.city} ${r.district} ${r.notes}'.toLowerCase();
+        if (!hay.contains(q)) return false;
+      }
+      return true;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return PublicPage(
@@ -132,8 +162,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           _hero(context),
           _statsBand(),
-          _categories(context),
-          _filterAndResults(),
+          _resultsSection(),
           _requestCta(context),
           _recentlyViewed(),
         ],
@@ -146,7 +175,7 @@ class _HomePageState extends State<HomePage> {
     final wide = MediaQuery.of(context).size.width > 760;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 56),
+      padding: EdgeInsets.symmetric(horizontal: wide ? 24 : 16, vertical: 44),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.navy, AppColors.navyLight],
@@ -159,54 +188,131 @@ class _HomePageState extends State<HomePage> {
           constraints: const BoxConstraints(maxWidth: 1000),
           child: Column(
             children: [
-              const Text('ابحث عن عقارك المثالي',
+              Text('ابحث عن عقارك المثالي',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       color: Colors.white,
-                      fontSize: 34,
+                      fontSize: wide ? 34 : 26,
                       fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              const Text('آلاف العقارات للبيع والإيجار في مكان واحد',
+              const Text('سوق الطلبات وإعلانات البيع والإيجار في مكان واحد',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70, fontSize: 16)),
-              const SizedBox(height: 28),
+                  style: TextStyle(color: Colors.white70, fontSize: 15)),
+              const SizedBox(height: 24),
               Container(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16)),
-                child: Flex(
-                  direction: wide ? Axis.horizontal : Axis.vertical,
+                child: Column(
                   children: [
-                    Expanded(
-                      flex: wide ? 2 : 0,
-                      child: SegmentedButton<ListingType?>(
-                        segments: const [
-                          ButtonSegment(value: null, label: Text('الكل')),
-                          ButtonSegment(
-                              value: ListingType.sale, label: Text('بيع')),
-                          ButtonSegment(
-                              value: ListingType.rent, label: Text('إيجار')),
-                        ],
-                        selected: {_listing},
-                        onSelectionChanged: (s) =>
-                            setState(() => _listing = s.first),
-                      ),
-                    ),
-                    SizedBox(width: wide ? 10 : 0, height: wide ? 0 : 10),
-                    Expanded(
-                      flex: wide ? 4 : 0,
-                      child: TextField(
-                        controller: _q,
-                        decoration: const InputDecoration(
-                          hintText: 'المدينة أو المنطقة...',
-                          prefixIcon: Icon(Icons.search),
+                    _modeToggle(),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _q,
+                            decoration: InputDecoration(
+                              hintText: 'المدينة أو المنطقة...',
+                              prefixIcon: const Icon(Icons.search),
+                              isDense: true,
+                              suffixIcon: _q.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear),
+                                      onPressed: () =>
+                                          setState(() => _q.clear()),
+                                    )
+                                  : null,
+                            ),
+                            onChanged: (_) => setState(() {}),
+                          ),
                         ),
-                        onChanged: (_) => setState(() {}),
-                      ),
+                        if (_mode != 'requests') ...[
+                          const SizedBox(width: 8),
+                          _detailedButton(wide),
+                        ],
+                      ],
                     ),
                   ],
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _detailedButton(bool wide) {
+    final active = _showDetailed;
+    return Material(
+      color: active ? AppColors.navy : AppColors.bg,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () => setState(() => _showDetailed = !_showDetailed),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: wide ? 16 : 12, vertical: 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.tune,
+                  size: 20, color: active ? AppColors.gold : AppColors.navy),
+              if (wide) ...[
+                const SizedBox(width: 6),
+                Text('فلتر تفصيلي',
+                    style: TextStyle(
+                        color: active ? Colors.white : AppColors.navy,
+                        fontWeight: FontWeight.bold)),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _modeToggle() {
+    return Container(
+      decoration: BoxDecoration(
+          color: AppColors.bg, borderRadius: BorderRadius.circular(12)),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        children: [
+          _modeSegment('requests', 'سوق الطلبات', Icons.campaign),
+          _modeSegment('sale', 'إعلانات البيع', Icons.sell),
+          _modeSegment('rent', 'إعلانات الإيجار', Icons.vpn_key),
+        ],
+      ),
+    );
+  }
+
+  Widget _modeSegment(String value, String label, IconData icon) {
+    final selected = _mode == value;
+    return Expanded(
+      child: InkWell(
+        onTap: () => _setMode(value),
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.navy : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon,
+                  size: 20, color: selected ? AppColors.gold : AppColors.navy),
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(label,
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: selected ? Colors.white : AppColors.navy)),
               ),
             ],
           ),
@@ -219,7 +325,7 @@ class _HomePageState extends State<HomePage> {
   Widget _statsBand() {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1000),
@@ -268,39 +374,26 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ===== تصفّح حسب النوع =====
-  Widget _categories(BuildContext context) {
-    const icons = {
-      PropertyType.apartment: Icons.apartment,
-      PropertyType.villa: Icons.villa,
-      PropertyType.land: Icons.landscape,
-      PropertyType.shop: Icons.storefront,
-      PropertyType.office: Icons.business_center,
-      PropertyType.building: Icons.location_city,
-    };
+  // ===== النتائج (تتبدّل حسب الوضع) =====
+  Widget _resultsSection() {
+    final wide = MediaQuery.of(context).size.width > 700;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+      color: AppColors.bg,
+      padding: EdgeInsets.symmetric(horizontal: wide ? 24 : 12, vertical: 20),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('تصفّح حسب النوع',
-                  style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.navy)),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  _categoryCard(null, 'الكل', Icons.grid_view),
-                  ...PropertyType.values.map(
-                      (t) => _categoryCard(t, t.arabicLabel, icons[t]!)),
-                ],
-              ),
+              if (_showDetailed && _mode != 'requests') ...[
+                _detailedFilter(),
+                const SizedBox(height: 16),
+              ],
+              if (_mode == 'requests')
+                _requestsMarket()
+              else
+                _listingsResults(),
             ],
           ),
         ),
@@ -308,191 +401,209 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _categoryCard(PropertyType? t, String label, IconData icon) {
-    final selected = _type == t;
-    return InkWell(
-      onTap: () => setState(() => _type = t),
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        width: 120,
-        padding: const EdgeInsets.symmetric(vertical: 18),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.navy : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-              color: selected ? AppColors.navy : AppColors.border),
-        ),
-        child: Column(
+  Widget _listingsResults() {
+    return StreamBuilder<List<Property>>(
+      stream: _service.watchProperties(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(40),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final results = _filterAndSort(snapshot.data ?? []);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon,
-                size: 32, color: selected ? AppColors.gold : AppColors.gold),
-            const SizedBox(height: 8),
-            Text(label,
-                style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: selected ? Colors.white : AppColors.navy)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Text('${results.length} عقار',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: AppColors.navy)),
+                ),
+                SizedBox(
+                  width: 160,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _sort,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                        labelText: 'ترتيب', isDense: true),
+                    items: const [
+                      DropdownMenuItem(value: 'newest', child: Text('الأحدث')),
+                      DropdownMenuItem(
+                          value: 'priceAsc', child: Text('الأقل سعراً')),
+                      DropdownMenuItem(
+                          value: 'priceDesc', child: Text('الأعلى سعراً')),
+                      DropdownMenuItem(
+                          value: 'mostViewed', child: Text('الأكثر مشاهدة')),
+                    ],
+                    onChanged: (v) => setState(() => _sort = v ?? 'newest'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            if (results.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(40),
+                child: Center(child: Text('لا توجد عقارات مطابقة')),
+              )
+            else
+              PropertyGrid(results),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
-  // ===== الفلتر + النتائج =====
-  Widget _filterAndResults() {
-    return Container(
-      color: AppColors.bg,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _filterBar(),
-              if (_showDetailed) _detailedFilter(),
-              const SizedBox(height: 16),
-              StreamBuilder<List<Property>>(
-                stream: _service.watchProperties(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Padding(
-                      padding: EdgeInsets.all(40),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  final results = _filterAndSort(snapshot.data ?? []);
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('${results.length} عقار',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: AppColors.navy)),
-                          SizedBox(
-                            width: 170,
-                            child: DropdownButtonFormField<String>(
-                              initialValue: _sort,
-                              decoration: const InputDecoration(
-                                  labelText: 'ترتيب', isDense: true),
-                              items: const [
-                                DropdownMenuItem(
-                                    value: 'newest', child: Text('الأحدث')),
-                                DropdownMenuItem(
-                                    value: 'priceAsc',
-                                    child: Text('الأقل سعراً')),
-                                DropdownMenuItem(
-                                    value: 'priceDesc',
-                                    child: Text('الأعلى سعراً')),
-                                DropdownMenuItem(
-                                    value: 'mostViewed',
-                                    child: Text('الأكثر مشاهدة')),
-                              ],
-                              onChanged: (v) =>
-                                  setState(() => _sort = v ?? 'newest'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      if (results.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.all(40),
-                          child:
-                              Center(child: Text('لا توجد عقارات مطابقة')),
-                        )
-                      else
-                        PropertyGrid(results),
-                    ],
+  // ===== سوق الطلبات (طلبات العملاء العامة) =====
+  Widget _requestsMarket() {
+    return StreamBuilder<List<PropertyRequest>>(
+      stream: _requestService.watchOpenRequests(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(40),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final all = _filterRequests(snapshot.data ?? []);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.campaign, color: AppColors.navy),
+                const SizedBox(width: 8),
+                Text('${all.length} طلب من عملاء يبحثون عن عقار',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: AppColors.navy)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text(
+                'هؤلاء عملاء يطلبون عقارات — سجّل الدخول كوسيط للرد والتواصل.',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+            const SizedBox(height: 14),
+            if (all.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(40),
+                child: Center(child: Text('لا توجد طلبات مطابقة حالياً')),
+              )
+            else
+              LayoutBuilder(
+                builder: (context, c) {
+                  final cols = c.maxWidth > 1000
+                      ? 3
+                      : c.maxWidth > 640
+                          ? 2
+                          : 1;
+                  final gap = 14.0;
+                  final w = (c.maxWidth - gap * (cols - 1)) / cols;
+                  return Wrap(
+                    spacing: gap,
+                    runSpacing: gap,
+                    children: all
+                        .map((r) => SizedBox(
+                            width: cols == 1 ? c.maxWidth : w,
+                            child: _requestCard(r)))
+                        .toList(),
                   );
                 },
               ),
-            ],
-          ),
-        ),
-      ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _filterBar() {
-    final wide = MediaQuery.of(context).size.width > 700;
+  Widget _requestCard(PropertyRequest r) {
+    final want = [
+      if (r.type != null) r.type!.arabicLabel,
+      if (r.listingType != null) r.listingType!.arabicLabel,
+      r.city,
+      if (r.district.isNotEmpty) r.district,
+      if (r.bedrooms != null) '${r.bedrooms}+ غرف',
+    ].where((e) => e.isNotEmpty).join(' · ');
+    final budget = (r.minPrice == null && r.maxPrice == null)
+        ? 'أي ميزانية'
+        : 'من ${r.minPrice != null ? formatPrice(r.minPrice!) : "—"} '
+            'إلى ${r.maxPrice != null ? formatPrice(r.maxPrice!) : "—"}';
+
     return Card(
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: AppColors.border),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: _q,
-              decoration: InputDecoration(
-                hintText: 'ابحث بالمدينة أو المنطقة أو العنوان...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _q.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () => setState(() => _q.clear()),
-                      )
-                    : null,
-              ),
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 10),
-            Flex(
-              direction: wide ? Axis.horizontal : Axis.vertical,
-              children: [
-                Expanded(
-                  flex: wide ? 1 : 0,
-                  child: DropdownButtonFormField<ListingType?>(
-                    initialValue: _listing,
-                    decoration: const InputDecoration(
-                        labelText: 'العرض', isDense: true),
-                    items: [
-                      const DropdownMenuItem(
-                          value: null, child: Text('بيع وإيجار')),
-                      ...ListingType.values.map((t) => DropdownMenuItem(
-                          value: t, child: Text(t.arabicLabel))),
-                    ],
-                    onChanged: (v) => setState(() => _listing = v),
-                  ),
-                ),
-                SizedBox(width: wide ? 10 : 0, height: wide ? 0 : 10),
-                Expanded(
-                  flex: wide ? 1 : 0,
-                  child: DropdownButtonFormField<PropertyType?>(
-                    initialValue: _type,
-                    decoration: const InputDecoration(
-                        labelText: 'النوع', isDense: true),
-                    items: [
-                      const DropdownMenuItem(
-                          value: null, child: Text('كل الأنواع')),
-                      ...PropertyType.values.map((t) => DropdownMenuItem(
-                          value: t, child: Text(t.arabicLabel))),
-                    ],
-                    onChanged: (v) => setState(() => _type = v),
-                  ),
-                ),
-              ],
-            ),
             Row(
               children: [
-                TextButton.icon(
-                  onPressed: () =>
-                      setState(() => _showDetailed = !_showDetailed),
-                  icon: Icon(_showDetailed ? Icons.expand_less : Icons.tune),
-                  label: Text(
-                      _showDetailed ? 'إخفاء الفلتر التفصيلي' : 'فلتر تفصيلي'),
+                const CircleAvatar(
+                  radius: 18,
+                  backgroundColor: AppColors.bg,
+                  child: Icon(Icons.person_search, color: AppColors.navy),
                 ),
-                const Spacer(),
-                if (_hasFilters)
-                  TextButton.icon(
-                    onPressed: _clearFilters,
-                    icon: const Icon(Icons.filter_alt_off, size: 18),
-                    label: const Text('مسح الفلاتر'),
-                    style: TextButton.styleFrom(foregroundColor: Colors.red),
-                  ),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text('عميل يطلب عقار',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 15)),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                      color: AppColors.gold.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20)),
+                  child: Text(r.listingType?.arabicLabel ?? 'طلب',
+                      style: const TextStyle(
+                          color: AppColors.navy,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold)),
+                ),
               ],
+            ),
+            const SizedBox(height: 10),
+            Text(want, style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(Icons.payments,
+                    size: 15, color: AppColors.textMuted),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(budget,
+                      style: const TextStyle(
+                          color: AppColors.textMuted, fontSize: 13)),
+                ),
+              ],
+            ),
+            if (r.notes.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(r.notes,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 13)),
+            ],
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => context.go('/admin'),
+                icon: const Icon(Icons.reply, size: 18),
+                label: const Text('رُدّ كوسيط'),
+              ),
             ),
           ],
         ),
@@ -508,6 +619,35 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              children: [
+                const Text('الفلتر التفصيلي',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: AppColors.navy)),
+                const Spacer(),
+                if (_hasFilters)
+                  TextButton.icon(
+                    onPressed: _clearFilters,
+                    icon: const Icon(Icons.filter_alt_off, size: 18),
+                    label: const Text('مسح'),
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<PropertyType?>(
+              initialValue: _type,
+              isExpanded: true,
+              decoration:
+                  const InputDecoration(labelText: 'نوع العقار', isDense: true),
+              items: [
+                const DropdownMenuItem(value: null, child: Text('كل الأنواع')),
+                ...PropertyType.values.map(
+                    (t) => DropdownMenuItem(value: t, child: Text(t.arabicLabel))),
+              ],
+              onChanged: (v) => setState(() => _type = v),
+            ),
+            const SizedBox(height: 12),
             Flex(
               direction: wide ? Axis.horizontal : Axis.vertical,
               children: [
@@ -587,12 +727,12 @@ class _HomePageState extends State<HomePage> {
   Widget _requestCta(BuildContext context) {
     final wide = MediaQuery.of(context).size.width > 720;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      margin: EdgeInsets.symmetric(horizontal: wide ? 24 : 12, vertical: 16),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1200),
           child: Container(
-            padding: const EdgeInsets.all(28),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                   colors: [AppColors.gold, AppColors.goldLight]),
@@ -625,8 +765,8 @@ class _HomePageState extends State<HomePage> {
                   icon: const Icon(Icons.add_home_work),
                   label: const Text('اطلب عقارك الآن'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.navy,
-                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.navy,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 24, vertical: 16),
                   ),
