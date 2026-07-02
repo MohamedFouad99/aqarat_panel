@@ -94,33 +94,11 @@ class AccountPage extends StatelessWidget {
 
   Widget _tile(BuildContext context, IconData icon, String label, String path,
       {ValueListenable<Iterable<String>>? listenable}) {
-    Widget trailing = const Icon(Icons.chevron_left);
-    if (listenable != null) {
-      trailing = ValueListenableBuilder<Iterable<String>>(
-        valueListenable: listenable,
-        builder: (_, ids, _) => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (ids.isNotEmpty)
-              CircleAvatar(
-                radius: 12,
-                backgroundColor: AppColors.gold,
-                child: Text('${ids.length}',
-                    style: const TextStyle(
-                        color: AppColors.navy,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold)),
-              ),
-            const Icon(Icons.chevron_left),
-          ],
-        ),
-      );
-    }
     return Card(
       child: ListTile(
         leading: Icon(icon, color: AppColors.navy),
         title: Text(label),
-        trailing: trailing,
+        trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted),
         onTap: () => context.go(path),
       ),
     );

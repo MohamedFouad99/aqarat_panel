@@ -26,11 +26,13 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // طلبات العقارات: أي زائر يقدر يرسل طلب،
-    // والوسطاء المسجَّلين يشوفوها ويتواصلوا.
+    // طلبات العقارات: أي زائر يقدر يرسل طلب.
+    // القراءة: الطلبات المفتوحة عامة (سوق الطلبات يظهر للزوار بدون تسجيل)،
+    // والطلبات المحجوزة/الموجّهة للمسجَّلين فقط.
     match /requests/{requestId} {
       allow create: if true;
-      allow read, update, delete: if request.auth != null;
+      allow read: if request.auth != null || resource.data.status == 'open';
+      allow update, delete: if request.auth != null;
     }
 
     // عدّاد مشاهدات العقارات: قراءة وزيادة متاحة للجميع.
