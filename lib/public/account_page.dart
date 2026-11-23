@@ -94,11 +94,30 @@ class AccountPage extends StatelessWidget {
 
   Widget _tile(BuildContext context, IconData icon, String label, String path,
       {ValueListenable<Iterable<String>>? listenable}) {
+    const chevron = Icon(Icons.chevron_right, color: AppColors.textMuted);
     return Card(
       child: ListTile(
         leading: Icon(icon, color: AppColors.navy),
         title: Text(label),
-        trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted),
+        // عدّاد العناصر (مفضلة/مقارنة/شاهدت مؤخرًا) يتحدّث تلقائياً.
+        trailing: listenable == null
+            ? chevron
+            : ValueListenableBuilder<Iterable<String>>(
+                valueListenable: listenable,
+                builder: (context, ids, _) => Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (ids.isNotEmpty)
+                      Badge(
+                        label: Text('${ids.length}'),
+                        backgroundColor: AppColors.gold,
+                        textColor: AppColors.navy,
+                      ),
+                    const SizedBox(width: 8),
+                    chevron,
+                  ],
+                ),
+              ),
         onTap: () => context.go(path),
       ),
     );
