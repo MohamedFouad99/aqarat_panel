@@ -1,218 +1,266 @@
 <div align="center">
 
-# 🏠 Aqarati — عقاراتي
+# Aqarati
 
-**A bilingual-ready, Arabic-first (RTL) real-estate marketplace and broker panel for Saudi Arabia, built with Flutter Web and Firebase.**
+### Real-estate marketplace and broker management platform
 
-منصة عقارية عربية لعرض العقارات وطلبها، مع لوحة تحكم للوسطاء تربط طلبات العملاء بالعروض المناسبة تلقائياً.
+An RTL-native property marketplace for the Saudi market, paired with a broker workspace that matches client demand to available listings automatically.
 
-[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
-[![Dart](https://img.shields.io/badge/Dart-3.11+-0175C2?logo=dart&logoColor=white)](https://dart.dev)
-[![Firebase](https://img.shields.io/badge/Firebase-Firestore%20%7C%20Auth%20%7C%20Storage%20%7C%20Hosting-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com)
-[![Platform](https://img.shields.io/badge/platform-Web-4285F4)](#)
+[![Flutter](https://img.shields.io/badge/Flutter-Web-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-%5E3.11-0175C2?logo=dart&logoColor=white)](https://dart.dev)
+[![Cloud Firestore](https://img.shields.io/badge/Cloud%20Firestore-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/products/firestore)
+[![Firebase Auth](https://img.shields.io/badge/Firebase%20Auth-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/products/auth)
+[![Firebase Hosting](https://img.shields.io/badge/Firebase%20Hosting-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/products/hosting)
+
+[Overview](#overview) · [Features](#features) · [Architecture](#architecture) · [Getting Started](#getting-started) · [Deployment](#deployment) · [Security](#security-model)
 
 </div>
 
 ---
 
-## Table of contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Tech stack](#tech-stack)
-- [Architecture](#architecture)
-- [Data model](#data-model)
-- [Smart matching](#smart-matching)
-- [Getting started](#getting-started)
-- [Deployment](#deployment)
-- [Security](#security)
-- [Testing](#testing)
-- [Project structure](#project-structure)
-- [Roadmap](#roadmap)
-
----
-
 ## Overview
 
-Aqarati has two sides that share one Firestore backend:
+Aqarati is a two-sided real-estate platform built on a single Flutter Web codebase and a shared Firebase backend.
 
-| | Who | What they do |
+| Surface | Audience | Purpose |
 |---|---|---|
-| **Public site** | Visitors and clients (no login required) | Browse, search, filter, map, compare and favorite listings; post a "what I'm looking for" request; report suspicious ads. |
-| **Broker panel** (`/admin`) | Brokers, owners and admins | Manage listings, claim client requests, get matched offers, borrow listings from other brokers, log deals and track KPIs. |
+| **Public marketplace** | Property seekers (no account required) | Discover, filter, compare and save listings; publish property requests; report fraudulent ads. |
+| **Broker workspace** (`/admin`) | Brokers, property owners, administrators | Manage inventory, capture client demand, collaborate across agencies, record deals and monitor performance. |
 
-The whole UI is Arabic, right-to-left, and tuned for the Saudi market (Saudi cities and districts, `05xxxxxxxx` phone validation, SAR pricing).
+The platform is built for its market: right-to-left layout throughout, Saudi cities and districts, local phone-number validation and SAR pricing.
+
+### Highlights
+
+- **Demand-driven matching.** A weighted scoring engine pairs client requests with listings and surfaces only high-confidence matches.
+- **Cross-broker collaboration.** Brokers can borrow listings from other brokers to serve their clients, with deal confirmation by both parties.
+- **Account-free browsing.** Favorites, comparisons and viewing history persist locally, so visitors can browse without signing up.
+- **Role-based access.** Firestore security rules enforce listing ownership, recipient-scoped notifications and admin-only moderation.
 
 ## Features
 
-### Public site
-- **Property listings**: grid with search and filters (sale or rent, type, city, price, bedrooms).
-- **Property details**: photo gallery, specs, static map, view counter, status banner, WhatsApp share and copy link.
-- **Interactive map** (`/map`): every geolocated listing on an OpenStreetMap layer; tap a price pin to open it.
-- **Compare** (`/compare`): side-by-side comparison of up to 4 properties.
-- **Favorites and recently viewed**: stored locally in the browser, no account needed, with live counters.
-- **Reverse marketplace** (`/request`): clients describe what they want and brokers respond.
-- **Advertiser profiles** (`/advertiser/:name`): broker details, verified badge and all of their listings.
-- **Report an ad**: flag fraud or incorrect data for admin review.
-- **Packages** (`/packages`): Free, Basic and Premium subscription tiers.
+### Public marketplace
 
-### Broker panel
-- **My listings**: create and edit properties with multi-image upload and Google Maps link parsing (lat/lng extraction).
-- **Opportunities**: open client requests, with requests in the broker's own city and districts ranked first.
-- **My requests**: requests the broker has claimed, plus recommended matching offers from all brokers.
-- **Borrowing**: request to market another broker's listing; the owner accepts or rejects.
-- **Deal log**: record closed deals. Deals on borrowed listings wait for the listing owner's confirmation.
-- **Reports and KPIs**: verified deals, total value, commission and listing performance.
-- **In-app notifications** for matches, borrow requests and deal confirmations.
-- **Broker profile**: coverage area (city + up to 5 districts) that drives the opportunity ranking.
+| Capability | Description |
+|---|---|
+| Listing discovery | Full-text search with filters for transaction type, property type, city, price range and bedrooms. |
+| Listing details | Image gallery, specifications, embedded map, view counter, availability status, WhatsApp share and copy link. |
+| Map exploration | All geolocated listings on an interactive OpenStreetMap layer with price markers. |
+| Comparison | Side-by-side comparison of up to four properties. |
+| Favorites and history | Locally persisted favorites and recently viewed listings with live counters. |
+| Property requests | Clients publish what they are looking for and brokers respond (reverse marketplace). |
+| Advertiser profiles | Public broker pages with verification badge and complete listing portfolio. |
+| Abuse reporting | Listings can be flagged for fraud or inaccurate data and routed to admin review. |
+| Subscription tiers | Free, Basic and Premium packages with tiered listing limits and visibility. |
 
-### Admin
-- Platform-wide KPIs, user management (roles, verification badge), and the report moderation queue.
+### Broker workspace
 
-## Tech stack
+| Module | Description |
+|---|---|
+| Listings | Create and edit properties with multi-image upload and automatic coordinate extraction from Google Maps links. |
+| Opportunities | Open client requests, ranked by the broker's configured coverage area. |
+| Claimed requests | Requests owned by the broker, enriched with recommended matching listings from the entire network. |
+| Listing borrowing | Request permission to market another broker's listing, with an accept/reject workflow. |
+| Deal ledger | Record closed deals; deals on borrowed listings require confirmation from the listing owner. |
+| Performance reports | KPIs for verified deals, transaction value, commission and listing engagement. |
+| Notifications | In-app alerts for new matches, borrow requests and pending deal confirmations. |
+| Broker profile | Contact details and coverage area (one city, up to five districts). |
+
+### Administration
+
+Platform-wide KPIs, user role management, broker verification and the abuse-report moderation queue.
+
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| UI | Flutter (Web), Material 3, `google_fonts`, full RTL and `flutter_localizations` |
-| Routing | `go_router` with deep-linkable URLs (`/property/:id`, `/advertiser/:name`, …) |
-| Backend | Cloud Firestore, Firebase Authentication (email/password), Firebase Storage |
-| Hosting | Firebase Hosting (SPA rewrite to `index.html`) |
-| Maps | `flutter_map` + `latlong2` (OpenStreetMap), Google Static Maps API |
-| Local state | `shared_preferences` (favorites, compare, recently viewed) |
+| Framework | Flutter (Web), Material 3 |
+| Language | Dart 3.11+ |
+| Routing | `go_router` with deep-linkable URLs |
+| Database | Cloud Firestore (real-time streams) |
+| Authentication | Firebase Authentication (email and password) |
+| File storage | Firebase Storage |
+| Hosting | Firebase Hosting (single-page app rewrites) |
+| Maps | `flutter_map`, `latlong2`, Google Static Maps API |
+| Local persistence | `shared_preferences` |
+| Localization | `flutter_localizations`, `intl` |
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    subgraph Client["Flutter Web app"]
-        P["Public pages<br/>lib/public"] --> S
-        A["Broker / admin panel<br/>lib/screens"] --> S
-        S["Services<br/>lib/services"] --> M["Matching engine<br/>lib/matching"]
-        S --> L[("Browser storage<br/>favorites · compare · recent")]
+    subgraph App["Flutter Web Application"]
+        direction TB
+        PUB["Public Marketplace<br/>lib/public"]
+        ADM["Broker Workspace<br/>lib/screens"]
+        SVC["Service Layer<br/>lib/services"]
+        MAT["Matching Engine<br/>lib/matching"]
+        LOC[("Local Storage")]
+        PUB --> SVC
+        ADM --> SVC
+        SVC --> MAT
+        SVC --> LOC
     end
-    S --> FS[("Cloud Firestore")]
-    S --> ST[("Firebase Storage<br/>property images")]
-    S --> AU["Firebase Auth"]
-    FS -. "secured by" .-> R["firestore.rules"]
+    SVC --> FS[("Cloud Firestore")]
+    SVC --> ST[("Firebase Storage")]
+    SVC --> AU["Firebase Auth"]
+    RULES["Security Rules"] -.-> FS
+    RULES -.-> ST
 ```
 
-- **Pages** (`lib/public`, `lib/screens`) are thin widgets that subscribe to Firestore streams through services.
-- **Services** (`lib/services`) own every Firestore, Storage and Auth call, so the UI never talks to Firebase directly.
-- **Models** (`lib/models`) map Firestore documents to typed Dart objects.
-- **Matching** (`lib/matching`) is a standalone, rule-based scoring engine (see below).
+The codebase follows a layered structure with a strict separation between presentation and data access:
 
-## Data model
+- **Presentation** (`lib/public`, `lib/screens`): stateless and stateful widgets that render reactive streams.
+- **Services** (`lib/services`): the only layer that talks to Firestore, Storage, Auth and local storage.
+- **Models** (`lib/models`): typed, immutable representations of Firestore documents.
+- **Domain logic** (`lib/matching`): a pure, framework-independent matching engine.
 
-| Collection | Purpose | Access |
-|---|---|---|
-| `properties` | Listings (`ownerId`, type, city, district, price, images, location, status) | Public read · owner or admin write |
-| `requests` | Client "looking for" requests | Public create · open requests are public |
-| `users` | Broker profile, role, verification, coverage area | Public read · self-edit (except `role` / `verified`) |
-| `borrow_requests` | Listing borrow requests between brokers | Signed-in users |
-| `deals` | Closed deals log (`verified` / `pending` / `rejected`) | Signed-in users |
-| `notifications` | In-app notifications (`toUid`) | Recipient only |
-| `reports` | Abuse reports on listings | Public create · admin moderation |
-| `views` | Per-property view counters | Public |
+## Data Model
 
-## Smart matching
+| Collection | Description | Read | Write |
+|---|---|---|---|
+| `properties` | Listings, including owner, location, pricing, media and status | Public | Owner or admin |
+| `requests` | Client property requests | Public (open requests) | Public create; brokers update |
+| `users` | Profiles, roles, verification status and coverage area | Public | Self (excluding `role` and `verified`) or admin |
+| `borrow_requests` | Inter-broker listing borrow requests | Authenticated | Authenticated |
+| `deals` | Deal ledger with `verified`, `pending` and `rejected` states | Authenticated | Authenticated |
+| `notifications` | In-app notifications | Recipient only | Authenticated create; recipient update |
+| `reports` | Abuse reports on listings | Authenticated | Public create; admin moderation |
+| `views` | Per-listing view counters | Public | Public |
 
-Every client request is scored against every listing (and vice versa) with configurable weights in [`lib/matching/matching_rules.dart`](lib/matching/matching_rules.dart):
+## Matching Engine
+
+Requests and listings are scored against each other on a 100-point scale. The weights are defined in [`lib/matching/matching_rules.dart`](lib/matching/matching_rules.dart) and can be changed without touching the rest of the system.
 
 | Criterion | Weight |
 |---|---:|
 | City | 25 |
-| Price vs. budget | 20 |
-| Listing type (sale or rent) | 15 |
+| Price within budget | 20 |
+| Transaction type (sale or rent) | 15 |
 | Property type | 15 |
 | District | 15 |
 | Bedrooms | 10 |
 | **Total** | **100** |
 
-Only matches scoring **≥ 60** are shown to brokers as recommendations.
+Results below a score of **60** are discarded, so brokers only see relevant recommendations.
 
-## Getting started
+## Getting Started
 
 ### Prerequisites
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) (Dart `^3.11`)
-- A Firebase project with **Firestore**, **Authentication (Email/Password)** and **Storage** enabled
-- [FlutterFire CLI](https://firebase.google.com/docs/flutter/setup) and [Firebase CLI](https://firebase.google.com/docs/cli)
 
-### 1. Clone and install
+| Requirement | Notes |
+|---|---|
+| [Flutter SDK](https://docs.flutter.dev/get-started/install) | Dart `^3.11` |
+| [Firebase CLI](https://firebase.google.com/docs/cli) | For rules and hosting deployment |
+| [FlutterFire CLI](https://firebase.google.com/docs/flutter/setup) | For generating Firebase configuration |
+| Firebase project | Firestore, Authentication (email and password) and Storage enabled |
+| Google Cloud API key | Maps Static API enabled |
+
+### Installation
+
 ```bash
 git clone https://github.com/MohamedFouad99/aqarat_panel.git
 cd aqarat_panel
 flutter pub get
 ```
 
-### 2. Connect your own Firebase project
-```bash
-flutterfire configure --platforms=web
-```
-This regenerates `lib/firebase_options.dart` for your project.
+### Configuration
 
-### 3. Set your Google Maps key
-Put your own key, restricted to your domain, in [`lib/config.dart`](lib/config.dart):
-```dart
-static const googleMapsApiKey = 'YOUR_GOOGLE_MAPS_API_KEY';
-```
+1. **Firebase:** generate `lib/firebase_options.dart` for your own project.
 
-### 4. Run
+   ```bash
+   flutterfire configure --platforms=web
+   ```
+
+2. **Google Maps:** set your API key in [`lib/config.dart`](lib/config.dart).
+
+   ```dart
+   static const googleMapsApiKey = 'YOUR_GOOGLE_MAPS_API_KEY';
+   ```
+
+3. **Security rules:** publish the Firestore and Storage rules.
+
+   ```bash
+   firebase deploy --only firestore:rules,storage
+   ```
+
+### Running Locally
+
 ```bash
 flutter run -d chrome
 ```
 
-### 5. Create the first admin
-Sign up from `/admin`, then in the Firebase console set `users/{yourUid}.role` to `"admin"`. Users can't grant themselves this role from the app.
+### Provisioning an Administrator
+
+1. Register an account through `/admin`.
+2. In the Firebase console, set `users/{uid}.role` to `"admin"` on that account.
+
+Administrator privileges can only be granted from the console or by an existing administrator. Users cannot grant them to themselves from the client.
 
 ## Deployment
 
 ```bash
 flutter build web --release
-firebase deploy --only hosting,firestore:rules
-firebase deploy --only storage   # storage.rules
+firebase deploy --only hosting
 ```
 
-## Security
+Hosting is configured in [`firebase.json`](firebase.json) to serve `build/web`, with all routes rewritten to `index.html` for client-side routing.
 
-- **Firestore rules** ([`firestore.rules`](firestore.rules)) enforce ownership on listings, recipient-only notifications, and admin-only moderation. `role` and `verified` on user profiles can only be changed by an admin.
-- **Storage rules** ([`storage.rules`](storage.rules)) allow public reads of property images and uploads by signed-in users only.
-- The Firebase web config and Google Maps key in this repo are client-side identifiers that ship with every web build. Protection comes from the security rules and from **restricting the Maps key by HTTP referrer** in Google Cloud Console.
+## Security Model
+
+| Control | Enforcement |
+|---|---|
+| Listing ownership | Only the listing owner or an administrator may update or delete a listing. |
+| Privilege escalation | `role` and `verified` are immutable to non-admin users. |
+| Notification privacy | Notifications are readable and editable only by their recipient. |
+| Moderation | Abuse reports can be resolved only by administrators. |
+| Media uploads | Storage writes require authentication; reads are public. |
+
+The Firebase web configuration and the Maps API key in client code are public identifiers by design. Access control is enforced by the security rules in [`firestore.rules`](firestore.rules) and [`storage.rules`](storage.rules). Restrict the Maps key by HTTP referrer in Google Cloud Console before going to production.
 
 ## Testing
 
 ```bash
-flutter test
-flutter analyze
+flutter test      # widget and unit tests
+flutter analyze   # static analysis
 ```
 
-The test suite runs without a Firebase connection (widget tests for the account page and unit tests for the validators).
+The test suite runs without a Firebase connection, so it can run in any CI environment.
 
-## Project structure
+## Project Structure
 
 ```
 lib/
-├── main.dart                 # Firebase init, local stores, MaterialApp.router (RTL)
-├── router.dart               # go_router routes
-├── config.dart               # API keys / constants
-├── firebase_options.dart     # generated by FlutterFire
-├── matching/                 # rule-based request ↔ listing matching
-├── models/                   # Property, PropertyRequest, Deal, BorrowRequest, AppNotification
-├── services/                 # Firestore / Storage / Auth / local-storage services
-├── public/                   # public website pages + shared widgets
-├── screens/                  # broker & admin panel
-├── theme/                    # colors, typography, Material theme
-└── utils/                    # formatting, Saudi cities & districts, validators
+├── main.dart              Application bootstrap and root widget
+├── router.dart            Route definitions
+├── config.dart            API keys and constants
+├── firebase_options.dart  Generated Firebase configuration
+├── matching/              Request and listing matching engine
+├── models/                Domain models
+├── services/              Data access layer
+├── public/                Public marketplace pages and shared widgets
+├── screens/               Broker workspace and administration
+├── theme/                 Design tokens and Material theme
+└── utils/                 Formatting, geographic data and validators
+test/                      Widget and unit tests
+firestore.rules            Firestore security rules
+storage.rules              Storage security rules
+firebase.json              Firebase Hosting and rules configuration
 ```
 
 ## Roadmap
 
-- [ ] WhatsApp bot reading the same `properties` collection through Cloud Functions
-- [ ] Admin-editable matching weights stored in Firestore
-- [ ] Paid subscription checkout for packages
-- [ ] Push notifications (FCM)
+- [ ] WhatsApp assistant backed by Cloud Functions and the shared `properties` collection
+- [ ] Administrator-configurable matching weights stored in Firestore
+- [ ] Online payment for subscription packages
+- [ ] Push notifications through Firebase Cloud Messaging
+- [ ] Continuous integration for tests, analysis and preview deployments
 
----
+## Contributing
 
-<div align="center">
-Built with ❤️ using Flutter & Firebase
-</div>
+1. Fork the repository and create a feature branch.
+2. Make sure `flutter analyze` and `flutter test` pass.
+3. Open a pull request that describes the change and its motivation.
+
+## Author
+
+**Mohamed Fouad**, [@MohamedFouad99](https://github.com/MohamedFouad99)
